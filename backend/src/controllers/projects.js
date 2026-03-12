@@ -359,6 +359,15 @@ exports.removeMember = async (req, res) => {
       });
     }
 
+    // Notify the removed user
+    await createNotification(
+      member.user_id,
+      'project_removed',
+      'Team Update',
+      `You have been removed from the project: ${project.title}`,
+      `/projects`
+    );
+
     await prisma.projectMember.delete({ where: { id: memberId } });
     res.json({ message: 'Member removed successfully' });
   } catch (error) {

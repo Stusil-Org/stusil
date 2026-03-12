@@ -281,6 +281,15 @@ exports.removeMember = async (req, res) => {
       data: { is_filled: false }
     });
 
+    // Notify the removed user
+    await createNotification(
+      application.user_id,
+      'startup_removed',
+      'Startup Update',
+      `You have been removed from the founding team of: ${startup.title}`,
+      `/startups`
+    );
+
     res.json({ message: 'Member removed successfully' });
   } catch (error) {
     console.error(error);

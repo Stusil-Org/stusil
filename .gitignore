@@ -1,7 +1,16 @@
-./backend/.env
-./frontend/.env
-./backend/node_modules
-./frontend/node_modules
-./backend/prisma/migrations
-./frontend/dist
-./docs
+# Environment variables
+backend/.env
+frontend/.env
+
+# Node modules
+backend/node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+
+# Prisma migrations (optional depending on team workflow)
+backend/prisma/migrations/
+
+# Docs (only if you really don't want them in repo)
+docs/
