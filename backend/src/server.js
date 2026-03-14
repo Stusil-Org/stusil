@@ -23,7 +23,7 @@ const server = http.createServer(app);
 // Sockets setup
 const io = new Server(server, {
   cors: {
-    origin: 'https://stusil.vercel.app/',
+    origin: 'https://stusil.vercel.app',
   }
 });
 

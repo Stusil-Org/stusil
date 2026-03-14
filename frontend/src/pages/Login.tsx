@@ -14,7 +14,8 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/login", {
+      // Corrected production path for v1 auth
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -41,7 +42,7 @@ export default function Login() {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="mx-auto w-full max-w-sm lg:w-96"
+          className="mx-auto w-full max-sm lg:w-96"
         >
           {/* Logo */}
           <div className="mb-8 flex items-center gap-3">
@@ -118,13 +119,11 @@ export default function Login() {
 
       {/* Right Graphic Section */}
       <div className="relative hidden w-0 flex-1 lg:block border-l border-white/5 bg-secondary/5 overflow-hidden">
-        {/* Abstract Animated Background */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '4s' }} />
           <div className="absolute bottom-1/4 right-1/4 h-[400px] w-[400px] rounded-full bg-glow-secondary/20 blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
         </div>
 
-        {/* Floating Elements */}
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           <div className="relative w-full max-w-lg">
             <motion.div
@@ -146,26 +145,9 @@ export default function Login() {
                 <div className="h-3 w-5/6 bg-white/5 rounded animate-pulse" />
               </div>
             </motion.div>
-
-            <motion.div
-              initial={{ x: 50, y: -50, opacity: 0 }}
-              animate={{ x: 30, y: -30, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="absolute -top-12 -right-12 glass-card p-4 border border-primary/20 shadow-2xl backdrop-blur-3xl z-10 hidden xl:block"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <div className="h-4 w-4 text-emerald-400" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-emerald-400">+12% Growth</div>
-                </div>
-              </div>
-            </motion.div>
           </div>
         </div>
 
-        {/* Overlay Graphic text */}
         <div className="absolute bottom-12 left-12 right-12 z-20">
           <h2 className="text-3xl font-bold text-white mb-2">Build something incredible.</h2>
           <p className="text-white/60 text-lg">Join the premier network for student founders and builders.</p>
