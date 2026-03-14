@@ -3,7 +3,7 @@ const { createNotification } = require('./notifications');
 
 exports.createStartup = async (req, res) => {
   try {
-    const { title, description, field, team_needed, roles } = req.body;
+    const { title, description, field, team_needed, roles, banner_image } = req.body;
 
     const startup = await prisma.startupIdea.create({
       data: {
@@ -11,6 +11,7 @@ exports.createStartup = async (req, res) => {
         description,
         field,
         team_needed: team_needed !== undefined ? team_needed : true,
+        banner_image: banner_image || null,
         creator_id: req.user.id
       }
     });
@@ -87,6 +88,13 @@ exports.getStartupById = async (req, res) => {
     });
 
     if (!startup) return res.status(404).json({ error: 'Startup idea not found' });
+
+    // Increment views
+    await prisma.startupIdea.update({
+      where: { id: req.params.id },
+      data: { views: { increment: 1 } }
+    });
+
     res.json(startup);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch startup idea' });

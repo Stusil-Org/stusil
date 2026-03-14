@@ -3,10 +3,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Rocket, Search, Users, Lightbulb, X, Zap, MessageCircle,
   Heart, Send, Check, Eye, Trash2, Plus, Layers, Code, Palette,
-  Server, UserPlus, Sparkles,
+  Server, UserPlus, Sparkles, Share2, Image as ImageIcon, ArrowUpRight,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
+
+function timeAgo(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const mins = Math.floor((now.getTime() - d.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 interface StartupRoleType {
   id: string;
@@ -41,6 +53,8 @@ interface StartupType {
   description: string;
   field: string;
   team_needed: boolean;
+  banner_image: string | null;
+  views: number;
   created_at: string;
   creator: { id: string; username: string; full_name: string };
   roles: StartupRoleType[];
@@ -75,8 +89,9 @@ export default function Startups() {
   const navigate = useNavigate();
 
   // Create form
-  const [newIdea, setNewIdea] = useState({ title: "", description: "", field: "" });
+  const [newIdea, setNewIdea] = useState({ title: "", description: "", field: "", banner_image: null as string | null });
   const [newRoles, setNewRoles] = useState<{ title: string; description: string; questions: string[] }[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [roleTitle, setRoleTitle] = useState("");
   const [roleDesc, setRoleDesc] = useState("");
   const [roleQuestions, setRoleQuestions] = useState<string[]>([""]);
@@ -125,18 +140,54 @@ export default function Startups() {
   const handleCreateStartup = async () => {
     if (!newIdea.title) return;
     try {
-      const res = await fetch("/api/v1/startups/create", {
-        method: "POST",
+      const isEditing = !!editingId;
+      const url = isEditing ? `/api/v1/startups/${editingId}` : "/api/v1/startups/create";
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ ...newIdea, team_needed: true, roles: newRoles }),
       });
       if (res.ok) {
         await fetchStartups();
         setShowCreate(false);
-        setNewIdea({ title: "", description: "", field: "" });
+        setNewIdea({ title: "", description: "", field: "", banner_image: null });
         setNewRoles([]);
+        setEditingId(null);
       }
     } catch (err) { console.error(err); }
+  };
+
+  const handleEdit = (startup: StartupType) => {
+    setEditingId(startup.id);
+    setNewIdea({ 
+      title: startup.title, 
+      description: startup.description, 
+      field: startup.field,
+      banner_image: startup.banner_image 
+    });
+    // Simplified: we're not editing roles in this pass for simplicity but could be added
+    setNewRoles([]); 
+    setShowCreate(true);
+    setSelected(null);
+  };
+
+  const handleShare = (startup: StartupType) => {
+    const link = `${window.location.origin}/startups?id=${startup.id}`;
+    navigator.clipboard.writeText(link);
+    alert("Shareable link copied to clipboard! Share it with your friends.");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewIdea({ ...newIdea, banner_image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleApply = async () => {
@@ -231,72 +282,120 @@ export default function Startups() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="heading-tight text-3xl font-bold text-foreground lg:text-4xl">Startup Ecosystem</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Post ideas, define roles, and build founding teams.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 backdrop-blur-sm">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-32 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
-            </div>
-            <button onClick={() => setShowCreate(true)} className="glow-button flex items-center gap-2 !py-2 text-sm">
-              <Lightbulb className="h-4 w-4" /> Post Idea
-            </button>
+        {/* Header Section */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+             <div className="flex items-center gap-3 mb-2">
+                <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                   <Lightbulb className="h-4 w-4 text-amber-500" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Innovation Hub</span>
+             </div>
+             <h1 className="heading-tight text-4xl font-black text-foreground tracking-tight lg:text-5xl">Ecosystem</h1>
+             <p className="mt-2 text-sm font-medium text-muted-foreground max-w-md">The genesis of greatness. Post ideas, assemble dream teams, and ignite the next revolution.</p>
+          </motion.div>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+             <div className="relative group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                   <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-amber-500 transition-colors" />
+                </div>
+                <input 
+                   value={search} 
+                   onChange={(e) => setSearch(e.target.value)} 
+                   placeholder="Explore ideas..." 
+                   className="w-full sm:w-64 rounded-2xl border border-border/50 bg-secondary/20 py-3 pl-11 pr-4 text-sm text-foreground outline-none ring-amber-500/20 transition-all focus:border-amber-500 focus:ring-4 placeholder:text-muted-foreground" 
+                />
+             </div>
+             <button onClick={() => setShowCreate(true)} className="glow-button flex items-center justify-center gap-2 group !bg-amber-500 hover:!bg-amber-600 border-none shadow-xl shadow-amber-500/20">
+                <Rocket className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                <span className="font-bold">Post Idea</span>
+             </button>
           </div>
         </div>
 
-        {/* Startup Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {filtered.map((startup, i) => {
-            const openRoles = startup.roles?.filter(r => !r.is_filled) || [];
-            return (
-              <motion.div
-                key={startup.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={async () => {
-                  const res = await fetch(`/api/v1/startups/${startup.id}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                  });
-                  if (res.ok) setSelected(await res.json());
-                }}
-                className="glass-card-hover cursor-pointer p-5 relative overflow-hidden group"
-              >
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/60 via-primary/60 to-rose-500/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {/* Startup Cards Grid */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((startup, i) => {
+              const openRoles = startup.roles?.filter(r => !r.is_filled) || [];
+              const colors = ["from-amber-600 to-orange-500", "from-primary to-indigo-600", "from-emerald-600 to-teal-500"];
+              const color = colors[i % colors.length];
 
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10">
-                      <Rocket className="h-5 w-5 text-primary" />
+              return (
+                <motion.div
+                  key={startup.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={async () => {
+                    const res = await fetch(`/api/v1/startups/${startup.id}`, {
+                      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                    });
+                    if (res.ok) setSelected(await res.json());
+                  }}
+                  className="group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-border/50 bg-secondary/5 backdrop-blur-md transition-all hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/5 cursor-pointer h-full"
+                >
+                  <div className={`absolute top-0 right-0 h-32 w-32 bg-gradient-to-br ${color} opacity-5 blur-[60px] group-hover:opacity-10 transition-opacity`} />
+                  
+                  <div className="p-8">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-lg overflow-hidden relative`}>
+                           {startup.banner_image ? (
+                             <img src={startup.banner_image} className="h-full w-full object-cover" />
+                           ) : (
+                             <Rocket className="h-6 w-6" />
+                           )}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-black text-foreground group-hover:text-amber-500 transition-colors line-clamp-1">{startup.title}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                             <div className="h-4 w-4 rounded-full bg-secondary flex items-center justify-center text-[7px] font-black text-muted-foreground uppercase border border-border/50">
+                                {startup.creator?.full_name?.substring(0,1)}
+                             </div>
+                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{startup.creator?.full_name}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                         <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500 border border-amber-500/20">
+                            {startup.field}
+                         </span>
+                         <span className="text-[9px] font-bold text-muted-foreground uppercase">{timeAgo(startup.created_at)}</span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="heading-tight text-base font-semibold text-foreground">{startup.title}</h3>
-                      <p className="text-xs text-muted-foreground">{startup.field} · by {startup.creator?.full_name}</p>
+
+                    <p className="mb-6 text-sm font-medium text-muted-foreground line-clamp-2 leading-relaxed">{startup.description}</p>
+
+                    <div className="flex items-center justify-between pt-6 border-t border-border/30">
+                       <div className="flex flex-wrap gap-2">
+                          {openRoles.slice(0, 3).map((r, ri) => (
+                             <div key={ri} className="flex items-center gap-1.5 rounded-xl bg-secondary/30 px-3 py-1.5 border border-border/30">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                                <span className="text-[9px] font-black text-foreground/80 uppercase">{r.title}</span>
+                             </div>
+                          ))}
+                          {openRoles.length > 3 && (
+                             <div className="text-[9px] font-black text-muted-foreground uppercase self-center ml-1">+{openRoles.length - 3} More</div>
+                          )}
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <button className="h-9 w-9 rounded-xl bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-all" onClick={(e) => { e.stopPropagation(); handleShare(startup); }}>
+                             <Share2 className="h-4 w-4" />
+                          </button>
+                          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 text-[10px] font-black uppercase text-foreground group-hover:bg-amber-500 group-hover:text-white transition-all">
+                             View Lab <ArrowUpRight className="h-4 w-4" />
+                          </button>
+                       </div>
                     </div>
                   </div>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">Idea</span>
-                </div>
-
-                <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{startup.description}</p>
-
-                {openRoles.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {openRoles.map((r, ri) => {
-                      const Icon = getRoleIcon(r.title);
-                      return (
-                        <span key={r.id} className={`flex items-center gap-1 rounded-lg bg-gradient-to-r ${roleColors[ri % roleColors.length]} border px-2 py-0.5 text-[10px] font-medium`}>
-                          <Icon className="h-3 w-3" /> {r.title}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       </motion.div>
 
@@ -409,10 +508,19 @@ export default function Startups() {
                 </div>
 
                 <div className="flex flex-wrap gap-3 border-t border-border/50 pt-5">
+                  <button onClick={() => handleShare(selected)} className="glow-button flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 border-transparent shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                    <Share2 className="h-4 w-4" /> Share
+                  </button>
+
                   {isOwner ? (
-                    <button onClick={() => handleDelete(selected.id)} className="glow-button-outline flex items-center gap-2 text-sm border-red-500/50 text-red-500 hover:bg-red-500/10">
-                      <Trash2 className="h-4 w-4" /> Delete
-                    </button>
+                    <>
+                      <button onClick={() => handleEdit(selected)} className="glow-button-outline flex items-center gap-2 text-sm">
+                        <UserPlus className="h-4 w-4" /> Edit Details
+                      </button>
+                      <button onClick={() => handleDelete(selected.id)} className="glow-button-outline flex items-center gap-2 text-sm border-red-500/50 text-red-500 hover:bg-red-500/10">
+                        <Trash2 className="h-4 w-4" /> Delete
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button onClick={() => navigate(`/messages?user=${selected.creator?.id}`)} className="glow-button-outline flex items-center gap-2 text-sm">
@@ -538,7 +646,7 @@ export default function Startups() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 z-[60] flex items-center justify-center px-4 pointer-events-none">
               <div className="glass-card border border-border/50 p-6 shadow-2xl w-full max-w-lg pointer-events-auto max-h-[85vh] overflow-y-auto">
                 <div className="flex items-start justify-between mb-6">
-                  <h2 className="heading-tight text-xl font-bold text-foreground">Post Startup Idea</h2>
+                  <h2 className="heading-tight text-xl font-bold text-foreground">{editingId ? "Edit Startup Idea" : "Post Startup Idea"}</h2>
                   <button onClick={() => setShowCreate(false)} className="rounded-xl p-2 text-muted-foreground hover:bg-secondary"><X className="h-4 w-4" /></button>
                 </div>
                 <div className="space-y-4">
@@ -553,6 +661,24 @@ export default function Startups() {
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Field / Industry</label>
                     <input value={newIdea.field} onChange={(e) => setNewIdea({ ...newIdea, field: e.target.value })} placeholder="e.g., Fintech, HealthTech" className="w-full rounded-xl border border-border/50 bg-secondary/30 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 transition-colors" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Banner Image (Optional)</label>
+                    <div className="flex flex-col gap-3">
+                      {newIdea.banner_image && (
+                        <div className="relative h-32 w-full rounded-xl overflow-hidden border border-border/50">
+                          <img src={newIdea.banner_image} className="h-full w-full object-cover" />
+                          <button onClick={() => setNewIdea({ ...newIdea, banner_image: null })} className="absolute top-2 right-2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/50 bg-secondary/20 py-4 text-xs font-medium text-muted-foreground hover:bg-secondary/30 transition-colors">
+                        <ImageIcon className="h-4 w-4" />
+                        {newIdea.banner_image ? "Change Banner" : "Upload Banner"}
+                        <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      </label>
+                    </div>
                   </div>
 
                   {/* Roles section */}
@@ -585,7 +711,10 @@ export default function Startups() {
                     </div>
                   </div>
 
-                  <button onClick={handleCreateStartup} className="glow-button flex w-full items-center justify-center gap-2 text-sm mt-4"><Rocket className="h-4 w-4" /> Post Idea</button>
+                  <button onClick={handleCreateStartup} className="glow-button flex w-full items-center justify-center gap-2 text-sm mt-4">
+                    <Rocket className="h-4 w-4" /> 
+                    {editingId ? "Update Idea" : "Post Idea"}
+                  </button>
                 </div>
               </div>
             </motion.div>

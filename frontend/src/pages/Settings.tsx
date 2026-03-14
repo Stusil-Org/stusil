@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, Bell, Shield, Palette, LogOut, Globe, Lock, Link as LinkIcon, Briefcase } from "lucide-react";
+import { User, Bell, Shield, Palette, LogOut, Globe, Lock, Link as LinkIcon, Briefcase, Settings, Save } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 
@@ -9,39 +9,37 @@ import { useNavigate } from "react-router-dom";
 // Note: Kept toggle visuals for UX placeholder purposes, but form binds to real user attributes.
 const sectionsBase = [
   {
-    title: "Profile Information",
+    id: "profile",
+    title: "Profile Intel",
     icon: User,
+    description: "Manage your public identity and credentials.",
     fields: [
       { label: "Display Name", key: "full_name", type: "text", placeholder: "Enter your full name" },
       { label: "Email Address", key: "email", type: "email", placeholder: "you@university.edu" },
-      { label: "Bio / Major", key: "bio", type: "text", placeholder: "e.g., Computer Science · Class of 2027" },
+      { label: "Headline", key: "bio", type: "text", placeholder: "e.g., Computer Science · Class of 2027" },
       { label: "University", key: "university", type: "text", placeholder: "e.g., MIT, Stanford" },
       { label: "Field of Study", key: "field_of_study", type: "text", placeholder: "e.g., Software Engineering" },
     ],
   },
   {
-    title: "Social Connections",
+    id: "social",
+    title: "Cyber Connections",
     icon: Globe,
+    description: "Sync your external profiles and portfolios.",
     fields: [
-      { label: "GitHub Profile", key: "github", type: "text", placeholder: "https://github.com/yourusername" },
-      { label: "LinkedIn Profile", key: "linkedin", type: "text", placeholder: "https://linkedin.com/in/yourusername" },
-      { label: "Personal Portfolio", key: "website", type: "text", placeholder: "https://yourwebsite.com" },
+      { label: "GitHub Hub", key: "github", type: "text", placeholder: "https://github.com/yourusername" },
+      { label: "LinkedIn Link", key: "linkedin", type: "text", placeholder: "https://linkedin.com/in/yourusername" },
+      { label: "Nexus Website", key: "website", type: "text", placeholder: "https://yourwebsite.com" },
     ],
   },
   {
-    title: "Security",
+    id: "security",
+    title: "Guardianship",
     icon: Shield,
+    description: "Protect your account with advanced protocols.",
     fields: [
       { label: "Current Password", key: "old_password", type: "password", placeholder: "••••••••" },
-      { label: "New Password", key: "new_password", type: "password", placeholder: "••••••••" },
-    ],
-  },
-  {
-    title: "Notifications",
-    icon: Bell,
-    fields: [
-      { label: "Email Alerts", key: "email_notif", type: "toggle", value: true },
-      { label: "Community Digests", key: "digest_notif", type: "toggle", value: false },
+      { label: "New Phase Key", key: "new_password", type: "password", placeholder: "••••••••" },
     ],
   },
 ];
@@ -132,78 +130,120 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="heading-tight text-3xl font-bold text-foreground lg:text-4xl text-gradient">Preferences</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Manage your account settings and connected apps.</p>
-          </div>
+      <div className="mx-auto max-w-6xl relative z-10 px-4">
+        {/* Header Section */}
+        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+              <div className="flex items-center gap-3 mb-2">
+                 <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Settings className="h-4 w-4 text-primary" />
+                 </div>
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Config</span>
+              </div>
+              <h1 className="heading-tight text-4xl font-black text-foreground tracking-tight lg:text-5xl">Preferences</h1>
+              <p className="mt-2 text-sm font-medium text-muted-foreground max-w-md">Calibrate your identity, security, and external nodes in the ecosystem.</p>
+           </motion.div>
+           
+           <div className="flex items-center gap-4">
+              <button 
+                onClick={handleSave} 
+                disabled={saving} 
+                className="glow-button flex items-center justify-center gap-2 group !bg-primary hover:!bg-primary/90 border-none shadow-xl shadow-primary/20 min-w-[140px]"
+              >
+                {saving ? "Syncing..." : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span className="font-bold">Save System</span>
+                  </>
+                )}
+              </button>
+              <button 
+                onClick={handleLogout} 
+                className="h-[46px] w-[46px] rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-all group"
+              >
+                <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+           </div>
         </div>
 
-        <div className="max-w-2xl space-y-6">
-          {sectionsBase.map((section, si) => (
-            <motion.div
-              key={section.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: si * 0.1, type: "spring", damping: 25 }}
-            >
-              <GlassCard className="glass-card-hover group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                <div className="mb-6 flex items-center gap-3 border-b border-border/50 pb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+           {/* Sidebar Navigation */}
+           <div className="lg:col-span-1 space-y-2">
+              {sectionsBase.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                  className="flex w-full items-center gap-4 rounded-[1.25rem] border border-transparent p-4 text-left transition-all hover:bg-secondary/30 group"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
                     <section.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-foreground tracking-wide">{section.title}</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Update your {section.title.toLowerCase()}</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-foreground">{section.title}</p>
+                    <p className="text-[9px] font-bold text-muted-foreground line-clamp-1">{section.description}</p>
                   </div>
-                </div>
-                <div className="space-y-3">
-                  {section.fields.map((field) => (
-                    <div key={field.label} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-xl hover:bg-secondary/30 transition-colors">
-                      <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
-                      {field.type === "toggle" ? (
-                        <div
-                          className={`h-6 w-11 cursor-pointer rounded-full p-0.5 transition-colors ${field.value ? "bg-primary shadow-[0_0_10px_rgba(88,101,242,0.4)]" : "bg-muted"
-                            }`}
-                        >
-                          <div
-                            className={`h-5 w-5 rounded-full bg-foreground transition-transform duration-300 ${field.value ? "translate-x-5" : "translate-x-0"
-                              }`}
-                          />
-                        </div>
-                      ) : (
-                        <input
-                          type={field.type}
-                          value={formData[field.key] || ""}
-                          onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                          placeholder={field.placeholder || ""}
-                          className="w-full sm:w-72 rounded-xl border border-border/50 bg-secondary/30 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/50 focus:bg-secondary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-inner"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </GlassCard>
-            </motion.div>
-          ))}
+                </button>
+              ))}
+           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex gap-4"
-          >
-            <button onClick={handleSave} disabled={saving} className="glow-button text-sm disabled:opacity-50">
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-            <button onClick={handleLogout} className="border border-red-500/50 bg-red-500/10 text-red-500 hover:bg-red-500/20 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2">
-              <LogOut className="h-4 w-4" /> Log Out
-            </button>
-          </motion.div>
+           {/* Main Content Areas */}
+           <div className="lg:col-span-3 space-y-10">
+              {sectionsBase.map((section, si) => (
+                <motion.div
+                  key={section.id}
+                  id={section.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <GlassCard className="rounded-[2.5rem] border-border/50 p-0 overflow-hidden relative group">
+                     <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-primary/50 to-transparent" />
+                     <div className="p-8 border-b border-border/30 bg-secondary/10 flex items-center justify-between">
+                        <div>
+                           <h2 className="text-xl font-black text-foreground tracking-tight">{section.title}</h2>
+                           <p className="text-xs font-medium text-muted-foreground mt-1">{section.description}</p>
+                        </div>
+                        <div className="h-10 w-10 rounded-2xl bg-background flex items-center justify-center text-primary shadow-sm">
+                           <section.icon className="h-5 w-5" />
+                        </div>
+                     </div>
+                     <div className="p-8 space-y-6">
+                        {section.fields.map((field) => (
+                          <div key={field.label} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center group/field">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover/field:text-primary transition-colors">
+                              {field.label}
+                            </label>
+                            <div className="md:col-span-2">
+                              {field.type === "password" ? (
+                                <div className="relative">
+                                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <input
+                                    type="password"
+                                    value={formData[field.key] || ""}
+                                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                    placeholder={field.placeholder}
+                                    className="w-full rounded-2xl border border-border/50 bg-secondary/20 py-3 pl-11 pr-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:ring-4 placeholder:text-muted-foreground/30 font-mono"
+                                  />
+                                </div>
+                              ) : (
+                                <input
+                                  type={field.type}
+                                  value={formData[field.key] || ""}
+                                  onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                  placeholder={field.placeholder}
+                                  className="w-full rounded-2xl border border-border/50 bg-secondary/20 py-3 px-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:ring-4 placeholder:text-muted-foreground/30"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                     </div>
+                  </GlassCard>
+                </motion.div>
+              ))}
+           </div>
         </div>
-      </motion.div>
+      </div>
     </AppLayout>
   );
 }

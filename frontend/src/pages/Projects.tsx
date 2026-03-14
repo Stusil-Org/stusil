@@ -4,9 +4,21 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, Users, Clock, X, Sparkles, Briefcase, ChevronDown,
   Check, UserPlus, Trash2, Eye, MessageCircle, Code, Palette, Server,
-  Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe,
+  Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe, ArrowUpRight,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
+
+function timeAgo(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const mins = Math.floor((now.getTime() - d.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 interface RoleType {
   id: string;
@@ -295,122 +307,152 @@ export default function Projects() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="heading-tight text-3xl font-bold text-foreground lg:text-4xl">Projects</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Create projects, define roles, and find your dream team.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 backdrop-blur-sm">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-32 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
+        {/* Header Section */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Briefcase className="h-4 w-4 text-primary" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Discovery Engine</span>
             </div>
-            <button onClick={() => setShowCreate(true)} className="glow-button flex items-center gap-2 !py-2 text-sm">
-              <Plus className="h-4 w-4" /> New Project
+            <h1 className="heading-tight text-4xl font-black text-foreground tracking-tight lg:text-5xl">Projects</h1>
+            <p className="mt-2 text-sm font-medium text-muted-foreground max-w-md">Find your next big venture. Explore projects, define roles, and build your legacy.</p>
+          </motion.div>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              </div>
+              <input 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                placeholder="Search stacks, fields..." 
+                className="w-full sm:w-64 rounded-2xl border border-border/50 bg-secondary/20 py-3 pl-11 pr-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:ring-4 placeholder:text-muted-foreground" 
+              />
+            </div>
+            <button onClick={() => setShowCreate(true)} className="glow-button flex items-center justify-center gap-2 group">
+              <Plus className="h-5 w-5 transition-transform group-hover:rotate-90" />
+              <span className="font-bold">Initialize</span>
             </button>
           </div>
         </div>
 
-        {/* Project Cards */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((project, i) => {
-            const openRoles = project.roles?.filter(r => !r.is_filled) || [];
-            const cardGradients = [
-              "from-primary via-indigo-600 to-glow-secondary",
-              "from-emerald-600 via-teal-500 to-cyan-500",
-              "from-amber-600 via-orange-500 to-rose-500",
-              "from-violet-600 via-purple-500 to-pink-500",
-              "from-cyan-600 via-blue-500 to-indigo-500",
-              "from-rose-600 via-pink-500 to-fuchsia-500",
-            ];
-            const gradient = cardGradients[i % cardGradients.length];
+        {/* Project Cards Grid */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((project, i) => {
+              const openRoles = project.roles?.filter(r => !r.is_filled) || [];
+              const cardGradients = [
+                "from-blue-600 via-indigo-600 to-violet-600",
+                "from-emerald-600 via-teal-500 to-cyan-500",
+                "from-orange-600 via-amber-500 to-yellow-500",
+                "from-fuchsia-600 via-purple-500 to-pink-500",
+              ];
+              const gradient = cardGradients[i % cardGradients.length];
 
-            return (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={async () => {
-                  const res = await fetch(`/api/v1/projects/${project.id}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                  });
-                  if (res.ok) setSelected(await res.json());
-                }}
-                className="glass-card-hover cursor-pointer relative overflow-hidden group"
-              >
-                {/* Gradient Cover Header */}
-                <div className={`relative h-28 bg-gradient-to-br ${gradient} overflow-hidden`}>
-                  {project.banner_image ? (
-                    <img src={project.banner_image} alt={project.title} className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-500" />
-                  ) : (
-                    /* Decorative SVG pattern */
-                    <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 100">
-                      <circle cx="150" cy="20" r="40" fill="white" />
-                      <circle cx="30" cy="70" r="25" fill="white" />
-                      <rect x="100" y="50" width="60" height="60" rx="10" fill="white" opacity="0.5" />
-                      {[...Array(5)].map((_, li) => (
-                        <line key={li} x1={li * 50} y1="0" x2={li * 50 + 30} y2="100" stroke="white" strokeWidth="0.5" opacity="0.3" />
-                      ))}
-                    </svg>
-                  )}
-
-                  {/* Share button overlay */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleCopyLink(project.id); }}
-                    className="absolute top-3 right-12 flex h-6 w-6 items-center justify-center rounded-lg bg-black/25 backdrop-blur-sm text-white/80 hover:bg-white/20 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <Share2 className="h-3 w-3" />
-                  </button>
-
-                  {/* Field badge */}
-                  {project.field && (
-                    <span className="absolute top-3 left-3 rounded-lg bg-black/25 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-medium text-white">
-                      {project.field}
-                    </span>
-                  )}
-
-                  {/* Status */}
-                  <span className="absolute top-3 right-3 flex items-center gap-1 rounded-lg bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active
-                  </span>
-
-                  {/* Owner avatar */}
-                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-black/25 backdrop-blur-sm px-2 py-1">
-                    <div className="h-5 w-5 rounded-full bg-white/30 flex items-center justify-center text-[8px] font-bold text-white uppercase">
-                      {project.owner?.full_name?.substring(0, 2) || "?"}
+              return (
+                <motion.div
+                  key={project.id}
+                  layout
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: i * 0.03, type: "spring", stiffness: 100 }}
+                  onClick={async () => {
+                    const res = await fetch(`/api/v1/projects/${project.id}`, {
+                      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                    });
+                    if (res.ok) setSelected(await res.json());
+                  }}
+                  className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-border/50 bg-secondary/5 backdrop-blur-md transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 cursor-pointer"
+                >
+                  {/* Visual Header */}
+                  <div className={`relative h-44 w-full bg-gradient-to-br ${gradient} overflow-hidden`}>
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                    {project.banner_image ? (
+                      <img src={project.banner_image} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center opacity-30 select-none">
+                         <Code className="h-20 w-20 text-white transform rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                      </div>
+                    )}
+                    
+                    {/* Top Badges */}
+                    <div className="absolute top-4 left-4 flex gap-2">
+                       <span className="rounded-full bg-black/30 backdrop-blur-md border border-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                         {project.field}
+                       </span>
                     </div>
-                    <span className="text-[10px] text-white/90 font-medium">{project.owner?.full_name}</span>
-                  </div>
-                </div>
 
-                {/* Card Body */}
-                <div className="p-4">
-                  <h3 className="heading-tight text-base font-semibold text-foreground line-clamp-1">{project.title}</h3>
-                  <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{project.description}</p>
-
-                  {/* Open roles */}
-                  {openRoles.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {openRoles.map((r, ri) => {
-                        const Icon = getRoleIcon(r.title);
-                        return (
-                          <span key={r.id} className={`flex items-center gap-1 rounded-lg bg-gradient-to-r ${roleColors[ri % roleColors.length]} border px-2 py-0.5 text-[10px] font-medium`}>
-                            <Icon className="h-3 w-3" /> {r.title}
-                          </span>
-                        );
-                      })}
+                    <div className="absolute top-4 right-4 group-hover:translate-y-[-2px] transition-transform">
+                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors" onClick={(e) => { e.stopPropagation(); handleCopyLink(project.id); }}>
+                          <Share2 className="h-3.5 w-3.5" />
+                       </div>
                     </div>
-                  )}
 
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground pt-3 border-t border-border/30">
-                    <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {project.members?.length || 1} members</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(project.created_at).toLocaleDateString()}</span>
+                    {/* Bottom Info Overlay */}
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                       <div className="flex -space-x-2">
+                          {[1,2,3].map(n => (
+                            <div key={n} className="h-7 w-7 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[8px] font-black text-muted-foreground uppercase">
+                               U
+                            </div>
+                          ))}
+                          <div className="h-7 w-7 rounded-full border-2 border-background bg-primary flex items-center justify-center text-[8px] font-black text-white">
+                             +{project.members?.length || 1}
+                          </div>
+                       </div>
+                       <span className="text-[10px] font-black text-white/90 uppercase tracking-widest bg-black/20 backdrop-blur-md px-2 py-0.5 rounded-md">
+                         {timeAgo(project.created_at)}
+                       </span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+
+                  {/* Body Content */}
+                  <div className="flex flex-1 flex-col p-6">
+                    <div className="mb-3 flex items-start justify-between">
+                       <h3 className="text-xl font-black text-foreground group-hover:text-primary transition-colors line-clamp-1">{project.title}</h3>
+                       {openRoles.length > 0 && (
+                         <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse" />
+                       )}
+                    </div>
+                    <p className="mb-4 text-xs font-medium text-muted-foreground line-clamp-2 leading-relaxed">{project.description}</p>
+                    
+                    <div className="mt-auto space-y-4">
+                       {/* Roles Preview */}
+                       <div className="flex flex-wrap gap-2">
+                          {openRoles.slice(0, 2).map((r, ri) => (
+                             <div key={ri} className="flex items-center gap-1.5 rounded-xl border border-border/50 bg-secondary/30 px-3 py-1.5">
+                                <span className={`h-1.5 w-1.5 rounded-full ${ri === 0 ? 'bg-primary' : 'bg-glow-secondary'}`} />
+                                <span className="text-[10px] font-bold text-foreground/80 uppercase">{r.title}</span>
+                             </div>
+                          ))}
+                          {openRoles.length > 2 && (
+                            <div className="flex items-center justify-center px-2 py-1.5 rounded-xl border border-dashed border-border/50 text-[10px] font-bold text-muted-foreground">
+                               +{openRoles.length - 2}
+                            </div>
+                          )}
+                       </div>
+
+                       <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                          <div className="flex items-center gap-2">
+                             <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-[8px] font-black text-primary border border-primary/20">
+                                {project.owner?.full_name?.substring(0,1).toUpperCase()}
+                             </div>
+                             <span className="text-[10px] font-bold text-muted-foreground uppercase">{project.owner?.full_name}</span>
+                          </div>
+                          <button className="flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest hover:translate-x-1 transition-transform">
+                             View Mission <ArrowUpRight className="h-3 w-3" />
+                          </button>
+                       </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       </motion.div>
 
@@ -420,119 +462,148 @@ export default function Projects() {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={() => setSelected(null)} />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
               className="fixed inset-0 z-[60] flex items-center justify-center px-4 pointer-events-none"
             >
-              <div className="glass-card border border-border/50 p-6 shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto pointer-events-auto">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="heading-tight text-2xl font-bold text-foreground">{selected.title}</h2>
-                    <p className="text-xs text-muted-foreground mt-1">by {selected.owner?.full_name} · {selected.field}</p>
-                  </div>
-                  <button onClick={() => setSelected(null)} className="rounded-xl p-2 text-muted-foreground hover:bg-secondary"><X className="h-4 w-4" /></button>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-6">{selected.description}</p>
+              <div className="glass-card border border-border/50 p-0 shadow-[0_0_100px_rgba(0,0,0,0.4)] w-full max-w-2xl max-h-[90vh] overflow-hidden pointer-events-auto flex flex-col rounded-[2.5rem]">
+                {/* Immersive Header */}
+                <div className="relative h-64 w-full flex-shrink-0">
+                   {selected.banner_image ? (
+                     <img src={selected.banner_image} className="h-full w-full object-cover" />
+                   ) : (
+                     <div className="h-full w-full bg-gradient-to-br from-primary to-indigo-900 flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                        <h2 className="text-8xl font-black text-white/5 uppercase tracking-tighter select-none">{selected.title}</h2>
+                     </div>
+                   )}
+                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                   
+                   <button onClick={() => setSelected(null)} className="absolute top-6 right-6 h-10 w-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-all">
+                      <X className="h-5 w-5" />
+                   </button>
 
-                {/* Team */}
-                <div className="mb-6">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Team ({selected.members?.length || 0})</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(selected.members || []).map((m) => (
-                      <span key={m.id} className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/30 px-3 py-1.5 text-xs font-medium text-white/90 relative group/member overflow-hidden">
-                        <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] text-primary font-bold uppercase shrink-0">
-                          {m.user.full_name.substring(0, 2)}
-                        </div>
-                        <span className="truncate max-w-[120px]">{m.user.full_name}</span>
-                        <span className="text-[9px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-md shrink-0">{m.role}</span>
-                        
-                        {(selected.owner_id === user?.id && m.user.id !== user?.id) && (
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveMember(selected.id, m.id);
-                            }}
-                            className="ml-1 rounded-full p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
-                            title="Remove member"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                      </span>
-                    ))}
-                  </div>
+                   <div className="absolute bottom-6 left-8 right-8">
+                      <div className="flex items-center gap-3 mb-3">
+                         <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">{selected.field}</span>
+                         <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-400 border border-emerald-500/20">
+                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Formation
+                         </span>
+                      </div>
+                      <h2 className="heading-tight text-4xl font-black text-foreground tracking-tight">{selected.title}</h2>
+                   </div>
                 </div>
 
-                {/* Open Positions */}
-                <div className="mb-6">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Open Positions</h3>
-                  {(!selected.roles || selected.roles.length === 0) ? (
-                    <p className="text-sm text-muted-foreground">No specific roles defined.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {selected.roles.map((role, ri) => {
-                        const Icon = getRoleIcon(role.title);
-                        const userApplied = role.applications?.some(a => a.user_id === user?.id);
-                        const appCount = role.applications?.filter(a => a.status === 'pending').length || 0;
-                        return (
-                          <div key={role.id} className={`rounded-xl border p-4 bg-gradient-to-r ${roleColors[ri % roleColors.length].split(' ').slice(0, 2).join(' ')} border-border/50`}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Icon className="h-4 w-4" />
-                                <span className="text-sm font-semibold text-foreground">{role.title}</span>
-                                {role.is_filled && <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-md">Filled</span>}
+                <div className="p-8 pt-4 overflow-y-auto custom-scrollbar">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-8">
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3">Briefing</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed font-medium">{selected.description}</p>
+                      </div>
+
+                      {/* Team Section */}
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-4 flex items-center justify-between">
+                          Current Operatives
+                          <span className="text-[10px] text-muted-foreground">{selected.members?.length || 0} Members</span>
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                          {(selected.members || []).map((m) => (
+                            <div key={m.id} className="group/mem flex items-center gap-3 rounded-2xl border border-border/50 bg-secondary/20 p-2 pr-4 transition-all hover:bg-secondary/40">
+                              <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 shrink-0">
+                                {m.user.full_name.substring(0, 1).toUpperCase()}
                               </div>
-                              <div className="flex items-center gap-2">
-                                {isOwner && appCount > 0 && (
-                                  <button onClick={() => setViewAppRole(role)} className="text-[11px] text-primary hover:underline flex items-center gap-1">
-                                    <Eye className="h-3 w-3" /> {appCount} apps
-                                  </button>
-                                )}
-                                {!isOwner && !role.is_filled && !userApplied && (
-                                  <button onClick={() => {
-                                    setApplyingRole(role);
-                                    const qs = role.questions ? JSON.parse(role.questions) : [];
-                                    setApplyAnswers(qs.map(() => ""));
-                                  }} className="glow-button !py-1.5 !px-3 text-xs flex items-center gap-1">
-                                    <Send className="h-3 w-3" /> Apply
-                                  </button>
-                                )}
-                                {userApplied && (
-                                  <span className="text-[11px] text-emerald-400">✓ Applied</span>
-                                )}
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-black text-foreground truncate">{m.user.full_name}</p>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">{m.role}</p>
                               </div>
+                              {(selected.owner_id === user?.id && m.user.id !== user?.id) && (
+                                <button onClick={() => handleRemoveMember(selected.id, m.id)} className="ml-2 h-6 w-6 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center opacity-0 group-hover/mem:opacity-100 transition-opacity">
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
                             </div>
-                            {role.description && <p className="text-xs text-muted-foreground mt-2">{role.description}</p>}
-                          </div>
-                        );
-                      })}
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Actions */}
-                <div className="flex flex-wrap gap-3 border-t border-border/50 pt-5">
-                  {isOwner ? (
-                    <button onClick={() => handleDelete(selected.id)} className="glow-button-outline flex items-center gap-2 text-sm border-red-500/50 text-red-500 hover:bg-red-500/10">
-                      <Trash2 className="h-4 w-4" /> Delete
-                    </button>
-                  ) : (
-                    <button onClick={async () => {
-                      const reason = window.prompt("Why are you reporting this project?");
-                      if (!reason) return;
-                      await fetch("/api/v1/reports/create", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
-                        body: JSON.stringify({ type: "project", target_id: selected.id, target_name: selected.title, reason })
-                      });
-                      alert("Project reported.");
-                      setSelected(null);
-                    }} className="glow-button-outline flex items-center gap-2 text-sm border-destructive/30 text-destructive hover:bg-destructive/10">
-                      Report
-                    </button>
-                  )}
+                    {/* Sidebar / Roles */}
+                    <div className="space-y-6">
+                      <div className="rounded-3xl bg-secondary/10 border border-border/50 p-5">
+                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-4">Open Positions</h3>
+                         {(!selected.roles || selected.roles.length === 0) ? (
+                            <p className="text-xs text-muted-foreground font-medium">Full squad established.</p>
+                         ) : (
+                           <div className="space-y-3">
+                              {selected.roles.map((role, ri) => {
+                                const Icon = getRoleIcon(role.title);
+                                const userApplied = role.applications?.some(a => a.user_id === user?.id);
+                                return (
+                                  <div key={role.id} className="relative group/role rounded-2xl border border-border/30 bg-background/50 p-4 transition-all hover:border-primary/50">
+                                     <div className="flex items-center justify-between mb-2">
+                                        <div className={`h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover/role:bg-primary group-hover/role:text-white transition-all`}>
+                                           <Icon className="h-4 w-4" />
+                                        </div>
+                                        {userApplied && <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Active App</span>}
+                                     </div>
+                                     <h4 className="text-[11px] font-black text-foreground uppercase tracking-tight">{role.title}</h4>
+                                     
+                                     {!role.is_filled && !userApplied && (selected.owner_id !== user?.id) && (
+                                       <button 
+                                         onClick={() => {
+                                           setApplyingRole(role);
+                                           const qs = role.questions ? JSON.parse(role.questions) : [];
+                                           setApplyAnswers(qs.map(() => ""));
+                                         }}
+                                         className="w-full mt-3 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
+                                       >
+                                         Initiate
+                                       </button>
+                                     )}
+                                     
+                                     {selected.owner_id === user?.id && role.applications?.length > 0 && (
+                                       <button onClick={() => setViewAppRole(role)} className="w-full mt-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">
+                                          Review {role.applications.length}
+                                       </button>
+                                     )}
+                                  </div>
+                                );
+                              })}
+                           </div>
+                         )}
+                      </div>
+
+                      <div className="pt-6 border-t border-border/30">
+                        {selected.owner_id === user?.id ? (
+                          <button onClick={() => handleDelete(selected.id)} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
+                            <Trash2 className="h-4 w-4" /> Dissolve Project
+                          </button>
+                        ) : (
+                          <div className="space-y-3">
+                             <button className="w-full py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
+                                Message Owner
+                             </button>
+                             <button onClick={async () => {
+                                const reason = window.prompt("Why are you reporting this project?");
+                                if (!reason) return;
+                                await fetch("/api/v1/reports/create", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+                                  body: JSON.stringify({ type: "project", target_id: selected.id, target_name: selected.title, reason })
+                                });
+                                alert("Project reported.");
+                                setSelected(null);
+                             }} className="w-full py-3 rounded-2xl border border-border/50 text-muted-foreground text-[10px] font-black uppercase tracking-widest hover:bg-secondary/30 transition-all">
+                                Report Anomaly
+                             </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>

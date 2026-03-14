@@ -14,6 +14,7 @@ const reportRoutes = require('./routes/reports');
 const userRoutes = require('./routes/users');
 const connectionRoutes = require('./routes/connections');
 const notificationRoutes = require('./routes/notifications');
+const communityRoutes = require('./routes/community');
 const initSockets = require('./sockets');
 
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/connections', connectionRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/community', communityRoutes);
 
 // Base route
 app.get('/', (req, res) => {

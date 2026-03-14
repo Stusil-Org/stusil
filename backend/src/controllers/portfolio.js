@@ -9,6 +9,10 @@ exports.getPortfolio = async (req, res) => {
         portfolio: true,
         projects: true,
         startup_ideas: true,
+        startup_applications: {
+          where: { status: 'accepted' },
+          include: { startup: true }
+        },
         project_members: {
           include: {
             project: {
@@ -48,7 +52,10 @@ exports.getPortfolio = async (req, res) => {
       },
       portfolio: user.portfolio || {},
       projects: [...ownedProjects, ...joinedProjects],
-      startup_ideas: user.startup_ideas
+      startup_ideas: [
+        ...user.startup_ideas.map(s => ({ ...s, isOwner: true })),
+        ...user.startup_applications.map(a => ({ ...a.startup, isOwner: false }))
+      ]
     });
   } catch (error) {
     console.error("Error fetching portfolio:", error);

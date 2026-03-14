@@ -12,7 +12,6 @@ import {
   Rocket,
   Briefcase,
   Shield,
-  UserPlus,
   Sun,
   Moon,
 } from "lucide-react";
@@ -23,7 +22,6 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Briefcase, label: "Projects", path: "/projects" },
   { icon: Users, label: "Community", path: "/community" },
-  { icon: UserPlus, label: "Connections", path: "/connections" },
   { icon: Rocket, label: "Startups", path: "/startups" },
   { icon: FolderOpen, label: "Portfolio", path: "/portfolio" },
   { icon: MessageCircle, label: "Messages", path: "/messages" },

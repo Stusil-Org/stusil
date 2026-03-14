@@ -1,229 +1,191 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, MessageCircle, AlertTriangle, ExternalLink, UserPlus } from "lucide-react";
+import { motion } from "framer-motion";
+import { TrendingUp, Star, Rocket, Eye, Flame, Trophy, Plus } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
+import { GlassCard } from "@/components/GlassCard";
 import { useNavigate } from "react-router-dom";
 
-interface CommunityUser {
-  id: string;
-  username: string;
-  full_name: string;
-  field_of_study: string;
-  bio: string;
-  color: string;
-}
-
-const colors = [
-  "from-primary to-glow-secondary",
-  "from-emerald-500 to-teal-500",
-  "from-amber-500 to-orange-500",
-  "from-pink-500 to-rose-500",
-  "from-cyan-500 to-blue-500",
-  "from-violet-500 to-purple-500",
-];
-
 export default function Community() {
-  const [people, setPeople] = useState<CommunityUser[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selected, setSelected] = useState<CommunityUser | null>(null);
+  const [trending, setTrending] = useState<{ trendingProjects: any[], hotIdeas: any[] }>({ trendingProjects: [], hotIdeas: [] });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPeople = async () => {
+    const fetchTrending = async () => {
       try {
-        const res = await fetch("/api/v1/users", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
+        const res = await fetch("/api/v1/community/trending");
         if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            const mapped = data.map((u: any, index: number) => ({
-              id: u.id,
-              username: u.username,
-              full_name: u.full_name || u.username,
-              field_of_study: u.field_of_study || "Student",
-              bio: u.bio || "No bio provided.",
-              color: colors[index % colors.length],
-            }));
-            setPeople(mapped);
-          }
+          setTrending(await res.json());
         }
       } catch (err) {
-        console.error("Error fetching people:", err);
+        console.error("Error fetching trending:", err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchPeople();
+    fetchTrending();
   }, []);
-
-  const filtered = people.filter(
-    (p) =>
-      p.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.field_of_study.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleReport = async (userId: string, name: string) => {
-    const reason = window.prompt(`Why are you reporting ${name}?`);
-    if (!reason) return;
-
-    try {
-      const res = await fetch("/api/v1/reports/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({
-          type: "user",
-          target_id: userId,
-          target_name: name,
-          reason
-        })
-      });
-
-      if (res.ok) {
-        alert("Report submitted successfully. Our mod team will review it.");
-        setSelected(null);
-      } else {
-        alert("Failed to report user.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error reporting user.");
-    }
-  };
-
-  const handleConnect = async () => {
-    if (!selected) return;
-    try {
-      const res = await fetch("/api/v1/connections/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({ receiver_id: selected.id })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Connection request sent successfully!");
-        setSelected(null);
-      } else {
-        alert(data.error || "Failed to send connection request.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error sending request.");
-    }
-  };
 
   return (
     <AppLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="heading-tight text-3xl font-bold text-foreground lg:text-4xl">Community</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Discover students, make friends, and find teammates.</p>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/30 px-3 py-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search students..."
-              className="w-40 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((person, i) => (
-            <motion.div
-              key={person.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, type: "spring", damping: 25 }}
-              onClick={() => setSelected(person)}
-              className="glass-card-hover cursor-pointer overflow-hidden p-5 flex flex-col items-center text-center"
-            >
-              <div className={`h-20 w-20 rounded-full bg-gradient-to-br ${person.color} flex items-center justify-center mb-4 text-2xl font-bold`}>
-                {person.full_name.substring(0, 2).toUpperCase()}
-              </div>
-              <h3 className="heading-tight text-lg font-semibold text-foreground truncate w-full">{person.full_name}</h3>
-              <p className="mt-1 text-xs font-medium text-primary">@{person.username}</p>
-              <span className="mt-2 rounded-full bg-secondary px-3 py-1 text-[10px] font-medium text-muted-foreground">
-                {person.field_of_study}
-              </span>
-            </motion.div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="col-span-full py-10 text-center text-muted-foreground">
-              No students found matching your search.
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-12 text-center lg:text-left">
+          <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="h-6 w-6 text-primary" />
             </div>
-          )}
+            <h1 className="heading-tight text-4xl font-black text-foreground lg:text-5xl tracking-tight">The Hype</h1>
+          </div>
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Real-time pulse of the most ambitious student projects and startup ideas. Join the movement.
+          </p>
         </div>
 
-        {/* User Detail Modal */}
-        <AnimatePresence>
-          {selected && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-                onClick={() => setSelected(null)}
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-0 z-[60] flex items-center justify-center px-4 pointer-events-none"
-              >
-                <div className="glass-card overflow-hidden border border-border/50 shadow-2xl w-full max-w-md pointer-events-auto flex flex-col items-center">
-                  <div className={`w-full h-32 bg-gradient-to-br ${selected.color} relative`}>
-                    <button onClick={() => setSelected(null)} className="absolute top-4 right-4 rounded-full bg-black/20 p-2 text-white hover:bg-black/40 backdrop-blur-md">
-                      <X className="h-4 w-4" />
-                    </button>
-                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 h-20 w-20 rounded-full border-4 border-background bg-secondary flex items-center justify-center text-2xl font-bold">
-                      {selected.full_name.substring(0, 2).toUpperCase()}
-                    </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Main Trending Projects Area */}
+            <div className="lg:col-span-8 space-y-8">
+              <section>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <Trophy className="h-4 w-4 text-amber-500" />
                   </div>
-                  
-                  <div className="p-6 pt-14 w-full text-center">
-                    <h2 className="heading-tight text-2xl font-bold text-foreground">{selected.full_name}</h2>
-                    <p className="text-sm font-medium text-primary mb-2">@{selected.username}</p>
-                    <p className="text-xs text-muted-foreground px-3 py-1 bg-secondary/50 rounded-full inline-block mb-4">{selected.field_of_study}</p>
-                    
-                    <p className="text-sm text-muted-foreground mb-8 text-left p-4 bg-secondary/20 rounded-xl leading-relaxed">
-                      {selected.bio}
-                    </p>
-
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                      <button onClick={() => navigate(`/u/${selected.username}`)} className="glow-button flex flex-1 items-center justify-center gap-2 text-sm !py-2">
-                        <ExternalLink className="h-4 w-4" /> View Portfolio
-                      </button>
-                      <button onClick={handleConnect} className="glow-button flex items-center justify-center gap-2 text-sm !py-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border-transparent">
-                        <UserPlus className="h-4 w-4" /> Request
-                      </button>
-                      <button onClick={() => navigate('/messages')} className="glow-button-outline w-10 flex items-center justify-center text-sm !p-2 rounded-xl">
-                        <MessageCircle className="h-4 w-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="mt-6 border-t border-border/30 pt-4">
-                       <button onClick={() => handleReport(selected.id, selected.full_name)} className="text-xs text-destructive hover:text-destructive/80 flex items-center justify-center gap-1 mx-auto transition-colors">
-                          <AlertTriangle className="h-3 w-3" /> Report Person
-                       </button>
-                    </div>
-                  </div>
+                  <h2 className="text-xl font-bold text-foreground">Trending Projects</h2>
                 </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {trending.trendingProjects.map((p, i) => (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                      onClick={() => navigate('/projects')}
+                      className="group relative cursor-pointer"
+                    >
+                      <GlassCard className="h-full overflow-hidden p-0 border-amber-500/20 glass-card-hover">
+                        <div className="relative h-48 w-full overflow-hidden">
+                          {p.banner_image ? (
+                            <img src={p.banner_image} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-3xl font-black text-amber-500/30">
+                              PRJ
+                            </div>
+                          )}
+                          <div className="absolute top-3 left-3 flex gap-2">
+                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white">
+                               <Eye className="h-3 w-3" /> {p.views}
+                             </div>
+                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-black">
+                               <Star className="h-3 w-3 fill-current" /> {p.stars}
+                             </div>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-2 block">{p.field}</span>
+                          <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-amber-400 transition-colors line-clamp-1">{p.title}</h3>
+                          <div className="flex items-center gap-2 mt-4">
+                             <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                               {p.owner.full_name.substring(0, 1)}
+                             </div>
+                             <span className="text-xs text-muted-foreground font-medium">by {p.owner.full_name}</span>
+                          </div>
+                        </div>
+                      </GlassCard>
+                    </motion.div>
+                  ))}
+                  {trending.trendingProjects.length === 0 && (
+                    <div className="col-span-full py-20 text-center border-2 border-dashed border-border/20 rounded-3xl text-muted-foreground">
+                      No trending projects yet. Be the first to star one!
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Bonus Graphic/Call to Action Area */}
+              <GlassCard className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10 border-primary/20 text-center overflow-hidden relative">
+                 <div className="absolute -top-10 -right-10 h-32 w-32 bg-primary/20 blur-[60px] rounded-full" />
+                 <div className="absolute -bottom-10 -left-10 h-32 w-32 bg-purple-500/20 blur-[60px] rounded-full" />
+                 <Flame className="h-10 w-10 text-primary mx-auto mb-4 animate-pulse" />
+                 <h3 className="text-xl font-bold text-foreground mb-2">Build Your Legacy</h3>
+                 <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+                   Every project starts with a single star. Get your teammates together and start building something that people talk about.
+                 </p>
+                 <button onClick={() => navigate('/projects')} className="glow-button flex items-center gap-2 mx-auto">
+                   <Plus className="h-4 w-4" /> Create Project
+                 </button>
+              </GlassCard>
+            </div>
+
+            {/* Sidebar: Hot Ideas & Community Pulse */}
+            <div className="lg:col-span-4 space-y-8">
+              <section>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-8 w-8 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                    <Rocket className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">Hot Ideas</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {trending.hotIdeas.map((idea, i) => (
+                    <motion.div
+                      key={idea.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      onClick={() => navigate('/startups')}
+                      className="group cursor-pointer"
+                    >
+                      <GlassCard className="p-5 border-purple-500/20 glass-card-hover relative overflow-hidden">
+                        <div className="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+                        <h4 className="text-sm font-bold text-foreground mb-2 group-hover:text-purple-400 transition-colors">{idea.title}</h4>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground">by {idea.creator.full_name}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-bold text-purple-400">
+                             <Flame className="h-3 w-3" /> {idea.joinRequests} applicants
+                          </div>
+                        </div>
+                      </GlassCard>
+                    </motion.div>
+                  ))}
+                  {trending.hotIdeas.length === 0 && (
+                    <div className="py-10 text-center border border-dashed border-border/20 rounded-2xl text-muted-foreground text-xs">
+                      No hot ideas yet. Post one now!
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <GlassCard className="p-6 border-primary/20 bg-secondary/10">
+                <div className="flex items-center gap-2 mb-4">
+                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                   <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Community Pulse</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-6">
+                  Our ranking algorithm weighs <strong>recent engagement</strong>, <strong>star velocity</strong>, and <strong>view counts</strong> to surface the most promising student ventures.
+                </p>
+                <div className="space-y-3">
+                   <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-tighter">
+                      <span className="text-muted-foreground">Star Weight</span>
+                      <span className="text-primary">x5 Points</span>
+                   </div>
+                   <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-tighter">
+                      <span className="text-muted-foreground">View Weight</span>
+                      <span className="text-primary">x1 Point</span>
+                   </div>
+                </div>
+              </GlassCard>
+            </div>
+          </div>
+        )}
       </motion.div>
     </AppLayout>
   );

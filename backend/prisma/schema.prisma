@@ -52,7 +52,9 @@ model Project {
   deadline    DateTime?
   visibility  String   @default("public")
   banner_image String?  // URL or base64 for project banner
-  created_at  DateTime @default(now())
+  views        Int      @default(0)
+  stars        Int      @default(0)
+  created_at   DateTime @default(now())
 
   owner            User             @relation("ProjectOwner", fields: [owner_id], references: [id])
   members          ProjectMember[]
@@ -146,7 +148,9 @@ model StartupIdea {
   creator_id  String
   field       String
   team_needed Boolean  @default(true)
-  created_at  DateTime @default(now())
+  banner_image String? // Optional banner for startup
+  views        Int     @default(0)
+  created_at   DateTime @default(now())
 
   creator      User               @relation(fields: [creator_id], references: [id])
   roles        StartupRole[]

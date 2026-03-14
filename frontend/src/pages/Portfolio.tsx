@@ -1,8 +1,10 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ExternalLink, Calendar, Star, Github, Linkedin, Globe, Mail,
-  MapPin, Code, Briefcase, Award, BookOpen, Camera, Pencil, Trash2, X, Save,
+  MapPin, Code, Briefcase, Award, BookOpen, Camera, Pencil, Trash2, X, Save, Rocket, Plus,
+  ArrowUpRight, Zap, Lightbulb,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 import { useState, useEffect, useRef } from "react";
@@ -18,6 +20,7 @@ interface UserProfile {
   stats: any;
   email: string;
   projects: any[];
+  startups: any[];
   username: string;
   profileImage: string | null;
 }
@@ -37,6 +40,7 @@ const colors = [
 ];
 
 export default function Portfolio() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditingSkills, setIsEditingSkills] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -56,7 +60,8 @@ export default function Portfolio() {
         const meData = await meRes.json();
         const portRes = await fetch(`/api/v1/portfolio/${meData.username}`);
         if (portRes.ok) {
-          const { user, portfolio, projects } = await portRes.json();
+          const portData = await portRes.json();
+          const { user, portfolio, projects } = portData;
 
           let parsedSkills = ["React", "TypeScript"];
           if (portfolio && portfolio.skills) {
@@ -79,15 +84,29 @@ export default function Portfolio() {
               date: new Date(p.created_at || Date.now()).toLocaleDateString(),
               desc: p.description,
               tech: p.skills_needed || [],
-              stars: p.likes || Math.floor(Math.random() * 20),
+              stars: p.stars || 0,
               role: p.isOwner ? "Owner" : p.role || "Member",
               isOwner: p.isOwner,
               color: colors[i % colors.length],
               field: p.field || "",
               owner: p.owner?.full_name || "You"
             })),
-            links: portfolio?.links ? JSON.parse(portfolio.links) : { github: "#", linkedin: "#", website: "student.dev" },
-            stats: { projects: projects.length, contributions: projects.length * 3, endorsements: 0 },
+            startups: (portData.startup_ideas || []).map((s: any, i: number) => ({
+              id: s.id,
+              title: s.title,
+              field: s.field,
+              desc: s.description,
+              isOwner: s.isOwner,
+              date: new Date(s.created_at).toLocaleDateString(),
+              color: colors[(i + 2) % colors.length]
+            })),
+            links: portfolio?.links ? JSON.parse(portfolio.links) : { github: "https://github.com", linkedin: "https://linkedin.com", website: "student.dev" },
+            stats: { 
+              projects: projects.length, 
+              startups: (portData.startup_ideas?.length || 0),
+              contributions: (projects.length + (portData.startup_ideas?.length || 0)) * 3, 
+              endorsements: 0 
+            },
           });
         }
       }
@@ -96,297 +115,289 @@ export default function Portfolio() {
 
   useEffect(() => { fetchPortfolio(); }, []);
 
-  const handleUpdateSkills = async () => {
-    if (!profile) return;
+  const handleUpdateBio = async () => {
     try {
-      const newSkills = skillsInput.split(",").map(s => s.trim()).filter(s => s);
       const res = await fetch("/api/v1/portfolio/update", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ skills: newSkills })
+        body: JSON.stringify({ bio: bioInput }),
       });
-      if (res.ok) { setProfile({ ...profile, skills: newSkills }); setIsEditingSkills(false); }
+      if (res.ok) {
+        await fetchPortfolio();
+        setIsEditingBio(false);
+      }
     } catch (err) { console.error(err); }
   };
 
-  const handleUpdateBio = async () => {
-    if (!profile) return;
+  const handleUpdateSkills = async () => {
+    const skills = skillsInput.split(",").map(s => s.trim()).filter(s => s);
     try {
-      // Update both portfolio bio and user bio
-      await fetch("/api/v1/portfolio/update", {
+      const res = await fetch("/api/v1/portfolio/update", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bio: bioInput })
+        body: JSON.stringify({ skills }),
       });
-      await fetch("/api/v1/users/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bio: bioInput })
-      });
-      setProfile({ ...profile, bio: bioInput });
-      setIsEditingBio(false);
+      if (res.ok) {
+        await fetchPortfolio();
+        setIsEditingSkills(false);
+      }
     } catch (err) { console.error(err); }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file
-    if (!file.type.startsWith("image/")) { alert("Please select an image file."); return; }
-    if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB."); return; }
-
     setUploading(true);
-    try {
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        const res = await fetch("/api/v1/users/profile-photo", {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const res = await fetch("/api/v1/users/profile-image", {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ profile_image: base64 })
+          body: JSON.stringify({ image: reader.result }),
         });
-        if (res.ok && profile) {
-          setProfile({ ...profile, profileImage: base64 });
-        }
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err) { console.error(err); setUploading(false); }
+        if (res.ok) await fetchPortfolio();
+      } catch (err) { console.error(err); }
+      finally { setUploading(false); }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleEditProject = async () => {
-    if (!editingProject) return;
-    try {
-      const res = await fetch(`/api/v1/projects/${editingProject.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: editingProject.title, description: editingProject.desc })
-      });
-      if (res.ok) { await fetchPortfolio(); setEditingProject(null); }
-    } catch (err) { console.error(err); }
-  };
-
-  const handleDeleteProject = async (id: string) => {
-    if (!window.confirm("Delete this project?")) return;
-    try {
-      const res = await fetch(`/api/v1/projects/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) await fetchPortfolio();
-    } catch (err) { console.error(err); }
-  };
-
-  if (!profile) return <AppLayout><div className="flex h-screen items-center justify-center p-8 text-muted-foreground animate-pulse">Loading portfolio...</div></AppLayout>;
+  if (!profile) return null;
 
   return (
     <AppLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        {/* Profile Header */}
-        <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-start">
-          {/* Profile Photo */}
-          <div className="relative group flex-shrink-0">
-            {profile.profileImage ? (
-              <img
-                src={profile.profileImage}
-                alt={profile.name}
-                className="h-24 w-24 rounded-3xl object-cover border-2 border-border/50"
-              />
-            ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-glow-secondary text-3xl font-bold text-white uppercase">
-                {profile.name.substring(0, 2)}
-              </div>
-            )}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              <Camera className={`h-6 w-6 text-white ${uploading ? "animate-pulse" : ""}`} />
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-          </div>
-
-          <div className="flex-1">
-            <h1 className="heading-tight text-3xl font-bold text-foreground">{profile.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{profile.title}</p>
-            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {profile.location}</span>
-              <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" /> {profile.university}</span>
-            </div>
-
-            {/* Bio - editable */}
-            {isEditingBio ? (
-              <div className="mt-3 space-y-2">
-                <textarea
-                  value={bioInput}
-                  onChange={(e) => setBioInput(e.target.value)}
-                  rows={3}
-                  className="w-full max-w-xl rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 resize-none"
-                />
-                <div className="flex gap-2">
-                  <button onClick={handleUpdateBio} className="glow-button flex items-center gap-1 text-xs !py-1.5 !px-3"><Save className="h-3 w-3" /> Save</button>
-                  <button onClick={() => setIsEditingBio(false)} className="glow-button-outline text-xs !py-1.5 !px-3">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-3 flex items-start gap-2">
-                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
-                <button
-                  onClick={() => { setIsEditingBio(true); setBioInput(profile.bio); }}
-                  className="text-muted-foreground hover:text-primary flex-shrink-0 mt-0.5"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Links */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[
-                { icon: Github, label: profile.links.github },
-                { icon: Linkedin, label: profile.links.linkedin },
-                { icon: Globe, label: profile.links.website },
-                { icon: Mail, label: profile.email },
-              ].map((link) => (
-                <span key={link.label} className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-secondary/50 px-2.5 py-1 text-xs text-muted-foreground hover:text-primary transition-colors">
-                  <link.icon className="h-3 w-3" /> {link.label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex gap-6 md:gap-8">
-            {[
-              { num: profile.stats.projects, label: "Projects" },
-              { num: profile.stats.contributions, label: "Contributions" },
-              { num: profile.stats.endorsements, label: "Endorsements" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <p className="heading-tight text-2xl font-bold text-foreground">{s.num}</p>
-                <p className="text-[10px] text-muted-foreground">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Skills */}
-        <GlassCard className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Skills</h2>
-            <button onClick={() => { setIsEditingSkills(true); setSkillsInput(profile.skills.join(", ")); }} className="text-muted-foreground hover:text-primary">
-              <Pencil className="h-4 w-4" />
-            </button>
-          </div>
-          {isEditingSkills ? (
-            <div className="space-y-3">
-              <input value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} placeholder="React, TypeScript, Node.js" className="w-full rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50" />
-              <div className="flex gap-2">
-                <button onClick={handleUpdateSkills} className="glow-button flex items-center gap-2 text-xs py-1.5 px-3">Save</button>
-                <button onClick={() => setIsEditingSkills(false)} className="glow-button-outline flex items-center gap-2 text-xs py-1.5 px-3">Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {profile.skills.map((s) => (
-                <span key={s} className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-1.5 text-xs font-medium text-primary">{s}</span>
-              ))}
-            </div>
-          )}
-        </GlassCard>
-
-        {/* Achievements */}
-        <GlassCard className="mb-6">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Achievements</h2>
-          <div className="flex flex-wrap gap-3">
-            {achievements.map((a) => (
-              <div key={a.title} className="flex items-center gap-2 rounded-xl border border-border/30 bg-secondary/20 px-3 py-2">
-                <a.icon className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-xs font-medium text-foreground">{a.title}</p>
-                  <p className="text-[10px] text-muted-foreground">{a.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-
-        {/* Projects - 3 columns */}
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Project History</h2>
-        {profile.projects.length === 0 ? (
-          <div className="text-sm text-muted-foreground p-6 text-center border border-dashed border-border/50 rounded-xl">No projects created yet.</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {profile.projects.map((p, i) => (
-              <motion.div
-                key={p.id || p.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-              >
-                <div className="glass-card-hover group overflow-hidden h-full flex flex-col">
-                  {/* Gradient header strip */}
-                  <div className={`h-24 bg-gradient-to-br ${p.color} opacity-80 group-hover:opacity-100 transition-opacity relative`}>
-                    <div className="absolute top-2 right-2 rounded-full bg-black/25 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider border border-white/10">
-                      {p.role}
+      <div className="mx-auto max-w-6xl relative z-10 px-4">
+        {/* Profile Hero Header */}
+        <section className="relative mb-12 overflow-hidden rounded-[3rem] border border-border/50 bg-secondary/5 p-8 shadow-2xl backdrop-blur-3xl lg:p-16">
+          <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-primary/10 blur-[120px] -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-glow-secondary/10 blur-[100px] -ml-20 -mb-20" />
+          
+          <div className="relative flex flex-col lg:flex-row items-center lg:items-end gap-12">
+            <div className="group relative">
+               <div className="relative h-48 w-48 overflow-hidden rounded-[2.5rem] border-8 border-background shadow-[0_0_50px_rgba(0,0,0,0.2)] transition-all duration-500 group-hover:scale-[1.05] group-hover:rotate-2">
+                  {profile.profileImage ? (
+                    <img src={profile.profileImage} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary via-indigo-600 to-glow-secondary text-7xl font-black text-white uppercase select-none">
+                      {profile.name[0]}
                     </div>
-                    <div className="absolute bottom-2 left-3 text-[10px] font-medium text-white/80 bg-black/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
-                      {p.field || "Project"}
+                  )}
+                  {uploading && <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm text-white text-[10px] font-black uppercase tracking-widest">Syncing...</div>}
+               </div>
+               <button onClick={() => fileInputRef.current?.click()} className="absolute -bottom-4 -right-4 h-14 w-14 rounded-[1.5rem] bg-background border-2 border-border/50 text-foreground shadow-2xl flex items-center justify-center hover:bg-secondary hover:scale-110 transition-all z-10 group/cam">
+                  <Camera className="h-6 w-6 group-hover/cam:rotate-12 transition-transform" />
+               </button>
+               <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+            </div>
+
+            <div className="flex-1 text-center lg:text-left">
+               <div className="mb-6">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 border border-primary/20 mb-4 animate-bounce-subtle">
+                     <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Elite Innovator</span>
+                  </div>
+                  <h1 className="heading-tight text-5xl font-black text-foreground lg:text-7xl tracking-tighter mb-2">{profile.name}</h1>
+                  <p className="text-xl font-bold bg-gradient-to-r from-primary to-glow-secondary bg-clip-text text-transparent">@{profile.username}</p>
+               </div>
+
+               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-secondary/30 px-4 py-2 rounded-2xl border border-border/30">
+                    <MapPin className="h-4 w-4 text-primary" /> {profile.location}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-secondary/30 px-4 py-2 rounded-2xl border border-border/30">
+                    <Briefcase className="h-4 w-4 text-primary" /> {profile.title}
+                  </div>
+               </div>
+            </div>
+
+            <div className="flex lg:flex-col gap-3">
+               {[
+                 { icon: Github, link: profile.links.github, color: "hover:text-[#2ea44f]" },
+                 { icon: Linkedin, link: profile.links.linkedin, color: "hover:text-[#0a66c2]" },
+                 { icon: Globe, link: profile.links.website, color: "hover:text-primary" }
+               ].map((item, i) => (
+                 <a key={i} href={item.link} className={`glass-card flex h-14 w-14 items-center justify-center rounded-3xl border-border/50 transition-all hover:scale-110 hover:-translate-y-1 ${item.color}`}>
+                   <item.icon className="h-6 w-6" />
+                 </a>
+               ))}
+            </div>
+          </div>
+
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+             {[
+               { label: "Active Ops", value: profile.stats.projects, icon: Rocket, color: "from-blue-500 to-indigo-600" },
+               { label: "Incubations", value: profile.stats.startups, icon: Lightbulb, color: "from-amber-500 to-orange-600" },
+               { label: "XP Points", value: profile.stats.contributions, icon: Zap, color: "from-emerald-500 to-teal-600" },
+               { label: "Social Rank", value: "#142", icon: Star, color: "from-rose-500 to-pink-600" }
+             ].map((stat, i) => (
+               <div key={i} className="group/stat relative overflow-hidden rounded-[2rem] border border-border/50 bg-secondary/20 p-6 transition-all hover:bg-secondary/40">
+                  <div className={`absolute top-0 right-0 h-20 w-20 bg-gradient-to-br ${stat.color} opacity-0 blur-[30px] group-hover/stat:opacity-20 transition-opacity`} />
+                  <div className="relative z-10">
+                     <div className="flex items-center justify-between mb-2">
+                        <stat.icon className="h-5 w-5 text-muted-foreground group-hover/stat:text-primary transition-colors" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</span>
+                     </div>
+                     <p className="text-3xl font-black text-foreground tracking-tight">{stat.value}</p>
+                  </div>
+               </div>
+             ))}
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-1 space-y-8">
+            <GlassCard className="rounded-[2.5rem] p-8 border-border/50 overflow-hidden relative group">
+               <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-30" />
+               <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Intelligence Briefing</h2>
+                  <button onClick={() => { setIsEditingBio(true); setBioInput(profile.bio); }} className="p-2 text-muted-foreground hover:text-primary transition-colors"><Pencil className="h-4 w-4" /></button>
+               </div>
+               {isEditingBio ? (
+                 <div className="space-y-4">
+                   <textarea value={bioInput} onChange={(e) => setBioInput(e.target.value)} rows={4} className="w-full rounded-2xl border border-border/50 bg-secondary/20 p-4 text-sm text-foreground outline-none focus:border-primary transition-all resize-none" />
+                   <div className="flex gap-2">
+                     <button onClick={handleUpdateBio} className="flex-1 bg-primary py-2 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20">Save</button>
+                     <button onClick={() => setIsEditingBio(false)} className="flex-1 bg-secondary py-2 rounded-xl text-xs font-black uppercase tracking-widest text-foreground">Cancel</button>
+                   </div>
+                 </div>
+               ) : (
+                 <p className="text-sm font-medium leading-relaxed text-muted-foreground group-hover:text-foreground transition-colors">{profile.bio}</p>
+               )}
+            </GlassCard>
+
+            <GlassCard className="rounded-[2.5rem] p-8 border-border/50 overflow-hidden relative group">
+               <div className="absolute top-0 left-0 w-1 h-full bg-glow-secondary opacity-30" />
+               <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-glow-secondary">Technical Arsenal</h2>
+                  <button onClick={() => { setIsEditingSkills(true); setSkillsInput(profile.skills.join(", ")); }} className="p-2 text-muted-foreground hover:text-glow-secondary transition-colors"><Pencil className="h-4 w-4" /></button>
+               </div>
+               {isEditingSkills ? (
+                 <div className="space-y-4">
+                   <input value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} className="w-full rounded-2xl border border-border/50 bg-secondary/20 px-4 py-2 text-sm text-foreground outline-none focus:border-glow-secondary transition-all" placeholder="React, Node, etc." />
+                   <div className="flex gap-2">
+                     <button onClick={handleUpdateSkills} className="flex-1 bg-glow-secondary py-2 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-glow-secondary/20">Sync</button>
+                     <button onClick={() => setIsEditingSkills(false)} className="flex-1 bg-secondary py-2 rounded-xl text-xs font-black uppercase tracking-widest text-foreground">Cancel</button>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="flex flex-wrap gap-2">
+                   {profile.skills.map((skill, i) => (
+                     <span key={i} className="rounded-xl border border-border/50 bg-secondary/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-glow-secondary/10 hover:border-glow-secondary/50 transition-all cursor-default">
+                       {skill}
+                     </span>
+                   ))}
+                 </div>
+               )}
+            </GlassCard>
+            
+            <GlassCard className="rounded-[2.5rem] p-8 border-border/50 overflow-hidden relative group">
+               <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">Milestones</h2>
+               <div className="space-y-4">
+                {achievements.map((item, i) => (
+                  <div key={i} className="flex items-center gap-4 group/item">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary text-primary border border-border/50 group-hover/item:border-primary/50 transition-all">
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-foreground">{item.title}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground">{item.date}</p>
                     </div>
                   </div>
-                  <div className="p-4 flex flex-col flex-1">
-                    <div className="flex items-start justify-between">
-                      <h3 className="heading-tight text-sm font-semibold text-foreground line-clamp-1">{p.title}</h3>
-                      {p.isOwner && (
-                        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                          <button onClick={() => setEditingProject({ id: p.id, title: p.title, desc: p.desc })} className="text-muted-foreground hover:text-amber-500 transition-colors"><Pencil className="h-3 w-3" /></button>
-                          <button onClick={() => handleDeleteProject(p.id)} className="text-muted-foreground hover:text-red-500 transition-colors"><Trash2 className="h-3 w-3" /></button>
+                ))}
+              </div>
+            </GlassCard>
+          </div>
+
+          <div className="lg:col-span-2 space-y-12">
+            <section>
+              <div className="flex items-center justify-between mb-8 px-4">
+                 <h2 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-4">
+                    Active Missions
+                    <span className="h-px w-24 bg-gradient-to-r from-primary to-transparent" />
+                 </h2>
+                 <button onClick={() => navigate('/projects')} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                    Discovery <ArrowUpRight className="h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                 </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {profile.projects.map((project, i) => (
+                    <motion.div key={project.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} className="group/proj relative overflow-hidden rounded-[2.5rem] border border-border/50 bg-secondary/5 p-6 backdrop-blur-md transition-all hover:border-primary/50 hover:shadow-2xl">
+                       <div className={`absolute top-0 right-0 h-40 w-40 bg-gradient-to-br ${project.color} opacity-0 blur-[60px] group-hover/proj:opacity-10 transition-opacity`} />
+                       <div className="relative z-10">
+                          <div className="flex items-start justify-between mb-4">
+                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20">
+                                <Code className="h-6 w-6" />
+                             </div>
+                             <span className="rounded-full bg-background/50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground border border-border/50 backdrop-blur-sm">{project.field}</span>
+                          </div>
+                          <h3 className="text-xl font-black text-foreground mb-2 group-hover/proj:text-primary transition-colors line-clamp-1">{project.title}</h3>
+                          <p className="text-xs font-medium text-muted-foreground line-clamp-2 leading-relaxed mb-6 h-8">{project.desc}</p>
+                          
+                          <div className="flex items-center justify-between pt-6 border-t border-border/30">
+                             <div className="flex items-center gap-2">
+                                <div className="h-6 w-6 rounded-lg bg-secondary shrink-0 flex items-center justify-center text-[8px] font-black text-muted-foreground uppercase">{project.role[0]}</div>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase">{project.role}</span>
+                             </div>
+                             <div className="text-[10px] font-bold text-muted-foreground">{project.date}</div>
+                          </div>
+                       </div>
+                    </motion.div>
+                  ))}
+                  {profile.projects.length === 0 && (
+                    <div className="col-span-2 flex flex-col items-center justify-center py-20 bg-secondary/5 rounded-[3rem] border border-dashed border-border/50">
+                       <Rocket className="h-10 w-10 text-muted-foreground/30 mb-4" />
+                       <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Journey begins now.</p>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-center justify-between mb-8 px-4">
+                 <h2 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-4">
+                    Inception Lab
+                    <span className="h-px w-24 bg-gradient-to-r from-amber-500 to-transparent" />
+                 </h2>
+                 <button onClick={() => navigate('/startups')} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                    Incubate <ArrowUpRight className="h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                 </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {profile.startups.map((s, i) => (
+                  <div key={s.id} onClick={() => navigate('/startups')} className="group/start cursor-pointer relative overflow-hidden rounded-[2.5rem] border border-border/50 bg-secondary/5 p-6 backdrop-blur-md transition-all hover:border-amber-500/50 hover:shadow-2xl">
+                     <div className={`absolute top-0 right-0 h-32 w-32 bg-gradient-to-br from-amber-500 to-orange-600 opacity-0 blur-[60px] group-hover/start:opacity-10 transition-opacity`} />
+                     <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-4">
+                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                              <Lightbulb className="h-6 w-6" />
+                           </div>
+                           <span className="rounded-full bg-background/50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500 border border-amber-500/20 backdrop-blur-sm">{s.field}</span>
                         </div>
-                      )}
-                    </div>
-                    {!p.isOwner && <p className="text-[10px] text-primary/80 font-medium mb-1">Owner: {p.owner}</p>}
-                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2 flex-1">{p.desc}</p>
-                    <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {p.date}</span>
-                      <span className="flex items-center gap-1"><Star className="h-3 w-3" /> {p.stars}</span>
-                    </div>
+                        <h3 className="text-xl font-black text-foreground mb-2 group-hover/start:text-amber-500 transition-colors uppercase tracking-tight line-clamp-1">{s.title}</h3>
+                        <p className="text-xs font-medium text-muted-foreground line-clamp-2 leading-relaxed mb-6 h-8">{s.desc}</p>
+                        <div className="flex items-center justify-between pt-6 border-t border-border/30">
+                           <span className={`text-[10px] font-black uppercase tracking-widest ${s.isOwner ? 'text-amber-500' : 'text-primary'}`}>
+                              {s.isOwner ? 'Founder' : 'Founding Member'}
+                           </span>
+                           <span className="text-[10px] font-bold text-muted-foreground">{s.date}</span>
+                        </div>
+                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-
-        {/* Edit Project Modal */}
-        {editingProject && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setEditingProject(null)} />
-            <div className="glass-card z-50 w-full max-w-md p-6 border border-border/50 shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-foreground">Edit Project</h2>
-                <button onClick={() => setEditingProject(null)} className="rounded-xl p-2 text-muted-foreground hover:bg-secondary"><X className="h-4 w-4" /></button>
+                ))}
+                {profile.startups.length === 0 && (
+                   <div className="col-span-2 flex flex-col items-center justify-center py-16 bg-secondary/5 rounded-[3rem] border border-dashed border-border/50">
+                      <Lightbulb className="h-10 w-10 text-muted-foreground/30 mb-4" />
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Genisis awaits.</p>
+                   </div>
+                )}
               </div>
-              <input value={editingProject.title} onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })} className="w-full mb-3 rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50" />
-              <textarea value={editingProject.desc} onChange={(e) => setEditingProject({ ...editingProject, desc: e.target.value })} rows={4} className="w-full mb-4 rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 resize-none" />
-              <div className="flex gap-2">
-                <button onClick={handleEditProject} className="glow-button text-sm w-full py-2">Save</button>
-                <button onClick={() => setEditingProject(null)} className="glow-button-outline text-sm w-full py-2">Cancel</button>
-              </div>
-            </div>
+            </section>
           </div>
-        )}
-
-        <div className="mt-6 flex justify-center gap-3">
-          <button className="glow-button flex items-center gap-2 text-sm">
-            <ExternalLink className="h-4 w-4" /> Add New Project
-          </button>
-          <button className="glow-button-outline flex items-center gap-2 text-sm">
-            <Globe className="h-4 w-4" /> View Public Portfolio
-          </button>
         </div>
-      </motion.div>
+      </div>
     </AppLayout>
   );
 }

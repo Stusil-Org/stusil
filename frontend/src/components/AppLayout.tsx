@@ -9,7 +9,6 @@ const mobileNavItems = [
   { label: "Dashboard", path: "/dashboard" },
   { label: "Projects", path: "/projects" },
   { label: "Community", path: "/community" },
-  { label: "Connections", path: "/connections" },
   { label: "Startups", path: "/startups" },
   { label: "Portfolio", path: "/portfolio" },
   { label: "Messages", path: "/messages" },
