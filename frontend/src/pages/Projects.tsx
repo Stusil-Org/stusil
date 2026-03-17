@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, Users, Clock, X, Sparkles, Briefcase, ChevronDown,
   Check, UserPlus, Trash2, Eye, MessageCircle, Code, Palette, Server,
-  Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe, ArrowUpRight,
+  Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe, ArrowUpRight, Pencil,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { getApiData, apiFetch } from "@/lib/api";
@@ -58,6 +58,8 @@ interface ProjectType {
   field: string;
   owner_id: string;
   team_size: number;
+  deadline?: string;
+  visibility?: string;
   banner_image?: string;
   created_at: string;
   owner: { id: string; username: string; full_name: string };
@@ -73,11 +75,11 @@ const roleIcons: Record<string, any> = {
 };
 
 function getRoleIcon(title: string) {
-  const lower = title.toLowerCase();
-  if (lower.includes("frontend") || lower.includes("react") || lower.includes("ui")) return Code;
-  if (lower.includes("backend") || lower.includes("api") || lower.includes("server")) return Server;
-  if (lower.includes("design") || lower.includes("ux") || lower.includes("ui")) return Palette;
-  return Layers;
+  const t = title.toLowerCase();
+  if (t.includes("front")) return roleIcons.frontend;
+  if (t.includes("back") || t.includes("api") || t.includes("engine")) return roleIcons.backend;
+  if (t.includes("design") || t.includes("ui") || t.includes("ux")) return roleIcons.designer;
+  return roleIcons.default;
 }
 
 const roleColors = [
@@ -99,6 +101,7 @@ export default function Projects() {
   const [applyAnswers, setApplyAnswers] = useState<string[]>([]);
   const [viewAppRole, setViewAppRole] = useState<RoleType | null>(null);
   const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [editingProject, setEditingProject] = useState<ProjectType | null>(null);
   
   // Custom Modals State
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -197,20 +200,36 @@ export default function Projects() {
   const handleCreateProject = async () => {
     if (!newProject.title) return;
     try {
-      const res = await apiFetch("/api/v1/projects/create", {
-        method: "POST",
-        body: JSON.stringify({
-          ...newProject,
-          team_size: newRoles.length + 1,
-          visibility: "public",
-          roles: newRoles,
-        }),
+      const isEditing = !!editingProject;
+      const url = isEditing ? `/api/v1/projects/${editingProject.id}` : "/api/v1/projects/create";
+      const method = isEditing ? "PUT" : "POST";
+      
+      const body: any = {
+        ...newProject,
+        team_size: newRoles.length + 1,
+        visibility: "public"
+      };
+
+      if (!isEditing) {
+        body.roles = newRoles;
+      }
+
+      const res = await apiFetch(url, {
+        method,
+        body: JSON.stringify(body),
       });
+
       if (res.ok) {
         await fetchProjects();
         setShowCreate(false);
         setNewProject({ title: "", description: "", field: "", banner_image: "" });
         setNewRoles([]);
+        setEditingProject(null);
+        if (isEditing) {
+           // Reload current selected
+           const data = await getApiData(`/api/v1/projects/${editingProject.id}`);
+           setSelected(data);
+        }
       }
     } catch (err) { console.error(err); }
   };
@@ -586,9 +605,27 @@ export default function Projects() {
 
                       <div className="pt-6 border-t border-border/30">
                         {selected.owner_id === user?.id ? (
-                          <button onClick={() => { setProjectToDelete(selected.id); setShowDeleteConfirm(true); }} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
-                            <Trash2 className="h-4 w-4" /> Dissolve Project
-                          </button>
+                          <div className="flex gap-3">
+                            <button 
+                              onClick={() => {
+                                setEditingProject(selected);
+                                setNewProject({
+                                  title: selected.title,
+                                  description: selected.description,
+                                  field: selected.field,
+                                  banner_image: selected.banner_image || ""
+                                });
+                                // We also need to handle roles if we want to edit them, but let's start with basic info
+                                setShowCreate(true);
+                              }} 
+                              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-primary/30 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 transition-all font-bold"
+                            >
+                              <Pencil className="h-4 w-4" /> Edit Project
+                            </button>
+                            <button onClick={() => { setProjectToDelete(selected.id); setShowDeleteConfirm(true); }} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
+                              <Trash2 className="h-4 w-4" /> Dissolve
+                            </button>
+                          </div>
                         ) : (
                           <div className="space-y-3">
                              <button className="w-full py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">

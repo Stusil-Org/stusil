@@ -49,6 +49,8 @@ export default function Portfolio() {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [skillsInput, setSkillsInput] = useState("");
   const [bioInput, setBioInput] = useState("");
+  const [isEditingLinks, setIsEditingLinks] = useState(false);
+  const [linksInput, setLinksInput] = useState({ github: "", linkedin: "", website: "" });
   const [editingProject, setEditingProject] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +149,20 @@ export default function Portfolio() {
     } catch (err) { console.error(err); }
   };
 
+  const handleUpdateLinks = async () => {
+    try {
+      const res = await fetch("/api/v1/portfolio/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ links: linksInput }),
+      });
+      if (res.ok) {
+        await fetchPortfolio();
+        setIsEditingLinks(false);
+      }
+    } catch (err) { console.error(err); }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -154,10 +170,10 @@ export default function Portfolio() {
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
-        const res = await fetch("/api/v1/users/profile-image", {
+        const res = await fetch("/api/v1/users/profile-photo", {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ image: reader.result }),
+          body: JSON.stringify({ profile_image: reader.result }),
         });
         if (res.ok) await fetchPortfolio();
       } catch (err) { console.error(err); }
@@ -241,15 +257,51 @@ export default function Portfolio() {
             </div>
 
             <div className="flex lg:flex-col gap-3">
-               {[
-                 { icon: Github, link: profile.links.github, color: "hover:text-[#2ea44f]" },
-                 { icon: Linkedin, link: profile.links.linkedin, color: "hover:text-[#0a66c2]" },
-                 { icon: Globe, link: profile.links.website, color: "hover:text-primary" }
-               ].map((item, i) => (
-                 <a key={i} href={item.link} className={`glass-card flex h-14 w-14 items-center justify-center rounded-3xl border-border/50 transition-all hover:scale-110 hover:-translate-y-1 ${item.color}`}>
-                   <item.icon className="h-6 w-6" />
-                 </a>
-               ))}
+               <button 
+                 onClick={() => { setIsEditingLinks(true); setLinksInput(profile.links); }}
+                 className="glass-card flex h-14 w-14 items-center justify-center rounded-3xl border-border/50 transition-all hover:scale-110 text-muted-foreground hover:text-primary mb-2"
+                 title="Edit Social Links"
+               >
+                 <Pencil className="h-5 w-5" />
+               </button>
+               
+               {isEditingLinks ? (
+                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                   <GlassCard className="max-w-md w-full p-8 rounded-[2.5rem]">
+                     <h3 className="text-xl font-black mb-6 flex items-center gap-3">
+                       <Globe className="h-5 w-5 text-primary" /> Update Links
+                     </h3>
+                     <div className="space-y-4 mb-8">
+                       <div>
+                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">GitHub</label>
+                         <input value={linksInput.github} onChange={e => setLinksInput({...linksInput, github: e.target.value})} className="w-full rounded-2xl border border-border/50 bg-secondary/20 p-4 text-sm outline-none focus:border-primary mt-1" />
+                       </div>
+                       <div>
+                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">LinkedIn</label>
+                         <input value={linksInput.linkedin} onChange={e => setLinksInput({...linksInput, linkedin: e.target.value})} className="w-full rounded-2xl border border-border/50 bg-secondary/20 p-4 text-sm outline-none focus:border-primary mt-1" />
+                       </div>
+                       <div>
+                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Website</label>
+                         <input value={linksInput.website} onChange={e => setLinksInput({...linksInput, website: e.target.value})} className="w-full rounded-2xl border border-border/50 bg-secondary/20 p-4 text-sm outline-none focus:border-primary mt-1" />
+                       </div>
+                     </div>
+                     <div className="flex gap-4">
+                       <button onClick={handleUpdateLinks} className="flex-1 bg-primary py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20">Sync Nodes</button>
+                       <button onClick={() => setIsEditingLinks(false)} className="flex-1 bg-secondary py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-foreground">Retreat</button>
+                     </div>
+                   </GlassCard>
+                 </motion.div>
+               ) : (
+                 [
+                   { icon: Github, link: profile.links.github, color: "hover:text-[#2ea44f]" },
+                   { icon: Linkedin, link: profile.links.linkedin, color: "hover:text-[#0a66c2]" },
+                   { icon: Globe, link: profile.links.website, color: "hover:text-primary" }
+                 ].map((item, i) => (
+                   <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className={`glass-card flex h-14 w-14 items-center justify-center rounded-3xl border-border/50 transition-all hover:scale-110 hover:-translate-y-1 ${item.color}`}>
+                     <item.icon className="h-6 w-6" />
+                   </a>
+                 ))
+               )}
             </div>
           </div>
 
@@ -352,7 +404,14 @@ export default function Portfolio() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <AnimatePresence mode="popLayout">
                   {profile.projects.map((project, i) => (
-                    <motion.div key={project.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} className="group/proj relative overflow-hidden rounded-[2.5rem] border border-border/50 bg-secondary/5 p-6 backdrop-blur-md transition-all hover:border-primary/50 hover:shadow-2xl">
+                    <motion.div 
+                      key={project.id} 
+                      onClick={() => navigate(`/projects?project=${project.id}`)}
+                      initial={{ opacity: 0, scale: 0.95 }} 
+                      animate={{ opacity: 1, scale: 1 }} 
+                      transition={{ delay: i * 0.05 }} 
+                      className="group/proj relative overflow-hidden rounded-[2.5rem] border border-border/50 bg-secondary/5 p-6 backdrop-blur-md transition-all hover:border-primary/50 hover:shadow-2xl cursor-pointer"
+                    >
                        <div className={`absolute top-0 right-0 h-40 w-40 bg-gradient-to-br ${project.color} opacity-0 blur-[60px] group-hover/proj:opacity-10 transition-opacity`} />
                        <div className="relative z-10">
                           <div className="flex items-start justify-between mb-4">

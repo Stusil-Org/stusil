@@ -190,10 +190,10 @@ const Index = () => {
             </div>
             <div>
               <h1 className="heading-tight text-3xl font-black text-foreground tracking-tight lg:text-4xl">
-                {user?.full_name || user?.username || "Control Center"}
+                {user ? (user.full_name || user.username) : "Loading System..."}
               </h1>
               <p className="mt-1 text-sm font-medium text-muted-foreground">
-                Stay updated, {user?.full_name || user?.username || "Innovator"}
+                Stay updated, {user ? (user.full_name || user.username) : "Innovator"}
               </p>
             </div>
           </div>

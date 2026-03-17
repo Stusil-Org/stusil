@@ -68,7 +68,17 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '1d' });
 
-    res.json({ token, user: { id: user.id, username: user.username, email: user.email, full_name: user.full_name } });
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        links: user.links
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error during login' });
@@ -89,6 +99,8 @@ exports.getMe = async (req, res) => {
         skill_level: true,
         bio: true,
         profile_image: true,
+        links: true,
+        role: true,
         created_at: true
       }
     });

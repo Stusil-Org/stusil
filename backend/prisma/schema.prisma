@@ -19,6 +19,7 @@ model User {
   profile_image  String?
   bio            String?
   links          String?          // JSON string for social links (github, linkedin, website)
+  role           String           @default("user")
   created_at     DateTime         @default(now())
   updated_at     DateTime         @updatedAt
 
