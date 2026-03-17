@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApiData, apiFetch } from "@/lib/api";
 
 export default function Admin() {
   const [tab, setTab] = useState<"overview" | "users" | "projects" | "startups">("overview");
@@ -24,16 +25,11 @@ export default function Admin() {
       const token = localStorage.getItem("token");
       if (!token) return navigate("/login");
       try {
-        const res = await fetch("/api/v1/auth/me", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) {
-          const me = await res.json();
-          if (me.email === 'nitnaware.prathmesh@gmail.com') {
-            setIsAdmin(true);
-          } else {
-            navigate("/dashboard");
-          }
+        const me = await getApiData("/api/v1/auth/me");
+        if (me && me.email === 'stusil.org@gmail.com') {
+          setIsAdmin(true);
         } else {
-          navigate("/login");
+          navigate("/dashboard");
         }
       } catch { navigate("/login"); }
     };
@@ -49,18 +45,17 @@ export default function Admin() {
     if (!token) return navigate("/login");
 
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [uRes, pRes, sRes, rRes] = await Promise.all([
-        fetch("/api/v1/admin/users", { headers }),
-        fetch("/api/v1/admin/projects", { headers }),
-        fetch("/api/v1/admin/startups", { headers }),
-        fetch("/api/v1/admin/reports", { headers })
+      const [usersData, projectsData, startupsData, reportsData] = await Promise.all([
+        getApiData("/api/v1/admin/users"),
+        getApiData("/api/v1/admin/projects"),
+        getApiData("/api/v1/admin/startups"),
+        getApiData("/api/v1/admin/reports")
       ]);
 
-      if (uRes.ok) setUsers(await uRes.json());
-      if (pRes.ok) setProjects(await pRes.json());
-      if (sRes.ok) setStartups(await sRes.json());
-      if (rRes.ok) setReports(await rRes.json());
+      if (usersData) setUsers(usersData);
+      if (projectsData) setProjects(projectsData);
+      if (startupsData) setStartups(startupsData);
+      if (reportsData) setReports(reportsData);
     } catch (err) {
       console.error("Error fetching admin data:", err);
     }
@@ -70,9 +65,8 @@ export default function Admin() {
     if (!window.confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`)) return;
 
     try {
-      const res = await fetch(`/api/v1/admin/${type}s/${id}`, {
+      const res = await apiFetch(`/api/v1/admin/${type}s/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       if (res.ok) {
         fetchData();
@@ -87,12 +81,8 @@ export default function Admin() {
   const handleResolveReport = async (id: string, action: 'dismiss' | 'remove_target') => {
     if (action === 'remove_target' && !window.confirm("Are you sure you want to delete the reported content across the platform?")) return;
     try {
-      const res = await fetch(`/api/v1/admin/reports/${id}/resolve`, {
+      const res = await apiFetch(`/api/v1/admin/reports/${id}/resolve`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem("token")}` 
-        },
         body: JSON.stringify({ action })
       });
       if (res.ok) fetchData();
@@ -104,9 +94,8 @@ export default function Admin() {
   const handleRemoveMember = async (type: "project" | "startup", parentId: string, memberId: string) => {
     if (!window.confirm("Are you sure you want to remove this member from the group?")) return;
     try {
-      const res = await fetch(`/api/v1/admin/${type}s/${parentId}/members/${memberId}`, {
+      const res = await apiFetch(`/api/v1/admin/${type}s/${parentId}/members/${memberId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       if (res.ok) {
         fetchData();

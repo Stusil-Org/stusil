@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 import { useState, useEffect, useRef } from "react";
+import { getApiData, apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserProfile {
   name: string;
@@ -42,6 +44,7 @@ const colors = [
 export default function Portfolio() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isEditingSkills, setIsEditingSkills] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [skillsInput, setSkillsInput] = useState("");
@@ -54,63 +57,63 @@ export default function Portfolio() {
 
   const fetchPortfolio = async () => {
     if (!token) return;
+    setLoading(true);
     try {
-      const meRes = await fetch("/api/v1/auth/me", { headers: { Authorization: `Bearer ${token}` } });
-      if (meRes.ok) {
-        const meData = await meRes.json();
-        const portRes = await fetch(`/api/v1/portfolio/${meData.username}`);
-        if (portRes.ok) {
-          const portData = await portRes.json();
-          const { user, portfolio, projects } = portData;
+      const meData = await getApiData("/api/v1/auth/me");
+      const portData = await getApiData(`/api/v1/portfolio/${meData.username}`);
+      
+      const { user, portfolio, projects } = portData;
 
-          let parsedSkills = ["React", "TypeScript"];
-          if (portfolio && portfolio.skills) {
-            try { parsedSkills = JSON.parse(portfolio.skills); } catch { parsedSkills = portfolio.skills.split(",").map((s: string) => s.trim()); }
-          }
-
-          setProfile({
-            username: meData.username,
-            name: user.full_name || user.username,
-            title: user.field_of_study ? `${user.field_of_study} Student` : "University Student",
-            university: user.university || "Campus",
-            location: "Local",
-            bio: portfolio?.bio || user.bio || "Passionate about building cool tools.",
-            email: user.email,
-            profileImage: user.profile_image || null,
-            skills: parsedSkills,
-            projects: projects.map((p: any, i: number) => ({
-              id: p.id,
-              title: p.title,
-              date: new Date(p.created_at || Date.now()).toLocaleDateString(),
-              desc: p.description,
-              tech: p.skills_needed || [],
-              stars: p.stars || 0,
-              role: p.isOwner ? "Owner" : p.role || "Member",
-              isOwner: p.isOwner,
-              color: colors[i % colors.length],
-              field: p.field || "",
-              owner: p.owner?.full_name || "You"
-            })),
-            startups: (portData.startup_ideas || []).map((s: any, i: number) => ({
-              id: s.id,
-              title: s.title,
-              field: s.field,
-              desc: s.description,
-              isOwner: s.isOwner,
-              date: new Date(s.created_at).toLocaleDateString(),
-              color: colors[(i + 2) % colors.length]
-            })),
-            links: portfolio?.links ? JSON.parse(portfolio.links) : { github: "https://github.com", linkedin: "https://linkedin.com", website: "student.dev" },
-            stats: { 
-              projects: projects.length, 
-              startups: (portData.startup_ideas?.length || 0),
-              contributions: (projects.length + (portData.startup_ideas?.length || 0)) * 3, 
-              endorsements: 0 
-            },
-          });
-        }
+      let parsedSkills = ["React", "TypeScript"];
+      if (portfolio && portfolio.skills) {
+        try { parsedSkills = JSON.parse(portfolio.skills); } catch { parsedSkills = portfolio.skills.split(",").map((s: string) => s.trim()); }
       }
-    } catch (err) { console.error("Error", err); }
+
+      setProfile({
+        username: meData.username,
+        name: user.full_name || user.username,
+        title: user.field_of_study ? `${user.field_of_study} Student` : "University Student",
+        university: user.university || "Campus",
+        location: "Local",
+        bio: portfolio?.bio || user.bio || "Passionate about building cool tools.",
+        email: user.email,
+        profileImage: user.profile_image || null,
+        skills: parsedSkills,
+        projects: projects.map((p: any, i: number) => ({
+          id: p.id,
+          title: p.title,
+          date: new Date(p.created_at || Date.now()).toLocaleDateString(),
+          desc: p.description,
+          tech: p.skills_needed || [],
+          stars: p.stars || 0,
+          role: p.isOwner ? "Owner" : p.role || "Member",
+          isOwner: p.isOwner,
+          color: colors[i % colors.length],
+          field: p.field || "",
+          owner: p.owner?.full_name || "You"
+        })),
+        startups: (portData.startup_ideas || []).map((s: any, i: number) => ({
+          id: s.id,
+          title: s.title,
+          field: s.field,
+          desc: s.description,
+          isOwner: s.isOwner,
+          date: new Date(s.created_at).toLocaleDateString(),
+          color: colors[(i + 2) % colors.length]
+        })),
+        links: portfolio?.links ? JSON.parse(portfolio.links) : { github: "https://github.com", linkedin: "https://linkedin.com", website: "student.dev" },
+        stats: { 
+          projects: projects.length, 
+          startups: (portData.startup_ideas?.length || 0),
+          contributions: (projects.length + (portData.startup_ideas?.length || 0)) * 3, 
+          endorsements: 0 
+        },
+      });
+    } catch (err) { 
+      console.error("Error fetching portfolio", err); 
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchPortfolio(); }, []);
@@ -162,6 +165,32 @@ export default function Portfolio() {
     };
     reader.readAsDataURL(file);
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="mx-auto max-w-6xl relative z-10 px-4 space-y-8">
+          <Skeleton className="h-64 rounded-[3rem] w-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <div className="space-y-8">
+                <Skeleton className="h-48 rounded-[2.5rem] w-full" />
+                <Skeleton className="h-48 rounded-[2.5rem] w-full" />
+             </div>
+             <div className="lg:col-span-2 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <Skeleton className="h-40 rounded-[2.5rem] w-full" />
+                   <Skeleton className="h-40 rounded-[2.5rem] w-full" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <Skeleton className="h-40 rounded-[2.5rem] w-full" />
+                   <Skeleton className="h-40 rounded-[2.5rem] w-full" />
+                </div>
+             </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!profile) return null;
 

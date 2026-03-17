@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
+import { getApiData, apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function timeAgo(dateStr: string) {
   const d = new Date(dateStr);
@@ -79,6 +81,7 @@ const roleColors = [
 
 export default function Startups() {
   const [startups, setStartups] = useState<StartupType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<StartupType | null>(null);
   const [search, setSearch] = useState("");
   const [user, setUser] = useState<any>(null);
@@ -98,26 +101,24 @@ export default function Startups() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
       try {
-        const res = await fetch("/api/v1/auth/me", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setUser(await res.json());
+        const data = await getApiData("/api/v1/auth/me");
+        setUser(data);
       } catch (err) { console.error(err); }
     };
     fetchUser();
   }, []);
 
   const fetchStartups = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/v1/startups", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) setStartups(data);
-      }
-    } catch (err) { console.error(err); }
+      const data = await getApiData("/api/v1/startups");
+      if (Array.isArray(data)) setStartups(data);
+    } catch (err) { 
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchStartups(); }, []);
@@ -144,9 +145,8 @@ export default function Startups() {
       const url = isEditing ? `/api/v1/startups/${editingId}` : "/api/v1/startups/create";
       const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ ...newIdea, team_needed: true, roles: newRoles }),
       });
       if (res.ok) {
@@ -193,19 +193,16 @@ export default function Startups() {
   const handleApply = async () => {
     if (!selected || !applyingRole) return;
     try {
-      const res = await fetch(`/api/v1/startups/${selected.id}/roles/${applyingRole.id}/apply`, {
+      const res = await apiFetch(`/api/v1/startups/${selected.id}/roles/${applyingRole.id}/apply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ answers: applyAnswers }),
       });
       if (res.ok) {
         await fetchStartups();
         setApplyingRole(null);
         setApplyAnswers([]);
-        const sRes = await fetch(`/api/v1/startups/${selected.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        if (sRes.ok) setSelected(await sRes.json());
+        const data = await getApiData(`/api/v1/startups/${selected.id}`);
+        if (data) setSelected(data);
       } else {
         const err = await res.json();
         alert(err.error || "Failed to apply.");
@@ -216,17 +213,14 @@ export default function Startups() {
   const handleAppAction = async (applicationId: string, action: "accept" | "reject") => {
     if (!selected) return;
     try {
-      const res = await fetch(`/api/v1/startups/${selected.id}/applications/${applicationId}`, {
+      const res = await apiFetch(`/api/v1/startups/${selected.id}/applications/${applicationId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
         await fetchStartups();
-        const sRes = await fetch(`/api/v1/startups/${selected.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        if (sRes.ok) setSelected(await sRes.json());
+        const data = await getApiData(`/api/v1/startups/${selected.id}`);
+        if (data) setSelected(data);
       }
     } catch (err) { console.error(err); }
   };
@@ -234,9 +228,8 @@ export default function Startups() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this startup idea?")) return;
     try {
-      await fetch(`/api/v1/startups/${id}`, {
+      await apiFetch(`/api/v1/startups/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       await fetchStartups();
       setSelected(null);
@@ -246,16 +239,13 @@ export default function Startups() {
   const handleRemoveMember = async (startupId: string, memberId: string) => {
     if (!window.confirm("Remove this member from the founding team?")) return;
     try {
-      const res = await fetch(`/api/v1/startups/${startupId}/members/${memberId}`, {
+      const res = await apiFetch(`/api/v1/startups/${startupId}/members/${memberId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.ok) {
         await fetchStartups();
-        const sRes = await fetch(`/api/v1/startups/${startupId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        if (sRes.ok) setSelected(await sRes.json());
+        const data = await getApiData(`/api/v1/startups/${startupId}`);
+        if (data) setSelected(data);
       } else {
         const err = await res.json();
         alert(err.error || "Failed to remove member.");
@@ -316,26 +306,29 @@ export default function Startups() {
 
         {/* Startup Cards Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((startup, i) => {
-              const openRoles = startup.roles?.filter(r => !r.is_filled) || [];
-              const colors = ["from-amber-600 to-orange-500", "from-primary to-indigo-600", "from-emerald-600 to-teal-500"];
-              const color = colors[i % colors.length];
+          {loading ? (
+            Array(4).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-80 rounded-[2.5rem] w-full" />
+            ))
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filtered.map((startup, i) => {
+                const openRoles = startup.roles?.filter(r => !r.is_filled) || [];
+                const colors = ["from-amber-600 to-orange-500", "from-primary to-indigo-600", "from-emerald-600 to-teal-500"];
+                const color = colors[i % colors.length];
 
-              return (
-                <motion.div
-                  key={startup.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={async () => {
-                    const res = await fetch(`/api/v1/startups/${startup.id}`, {
-                      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                    });
-                    if (res.ok) setSelected(await res.json());
-                  }}
+                return (
+                  <motion.div
+                    key={startup.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={async () => {
+                      const data = await getApiData(`/api/v1/startups/${startup.id}`);
+                      if (data) setSelected(data);
+                    }}
                   className="group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-border/50 bg-secondary/5 backdrop-blur-md transition-all hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/5 cursor-pointer h-full"
                 >
                   <div className={`absolute top-0 right-0 h-32 w-32 bg-gradient-to-br ${color} opacity-5 blur-[60px] group-hover:opacity-10 transition-opacity`} />
@@ -396,6 +389,7 @@ export default function Startups() {
               );
             })}
           </AnimatePresence>
+          )}
         </div>
       </motion.div>
 

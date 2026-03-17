@@ -5,6 +5,8 @@ import { GlassCard } from "@/components/GlassCard";
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApiData, apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Note: Kept toggle visuals for UX placeholder purposes, but form binds to real user attributes.
 const sectionsBase = [
@@ -48,32 +50,30 @@ export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
       if (!token) return;
-
+      setLoading(true);
       try {
-        const res = await fetch("/api/v1/auth/me", {
-          headers: { Authorization: `Bearer ${token}` }
+        const data = await getApiData("/api/v1/auth/me");
+        setUser(data);
+        let links = {};
+        try {
+          if (data.links) links = JSON.parse(data.links);
+        } catch (e) { console.error("Error parsing links", e); }
+        
+        setFormData({
+          ...data,
+          ...links
         });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-          let links = {};
-          try {
-            if (data.links) links = JSON.parse(data.links);
-          } catch (e) { console.error("Error parsing links", e); }
-          
-          setFormData({
-            ...data,
-            ...links
-          });
-        }
       } catch (err) {
         console.error("Error fetching user", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -81,7 +81,6 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    const token = localStorage.getItem("token");
     
     // Extract links
     const links = {
@@ -99,12 +98,8 @@ export default function SettingsPage() {
     };
 
     try {
-      const res = await fetch("/api/v1/users/profile", {
+      const res = await apiFetch("/api/v1/users/profile", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify(body)
       });
 
@@ -126,7 +121,31 @@ export default function SettingsPage() {
     navigate("/login");
   };
 
-  if (!user) return <AppLayout><div className="flex h-screen items-center justify-center text-muted-foreground animate-pulse">Loading settings...</div></AppLayout>;
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="mx-auto max-w-6xl space-y-8 px-4">
+          <div className="flex justify-between items-end mb-12">
+            <Skeleton className="h-20 w-1/2 rounded-3xl" />
+            <Skeleton className="h-12 w-32 rounded-2xl" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+            </div>
+            <div className="lg:col-span-3 space-y-10">
+              <Skeleton className="h-80 w-full rounded-[2.5rem]" />
+              <Skeleton className="h-80 w-full rounded-[2.5rem]" />
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <AppLayout>

@@ -4,6 +4,8 @@ import { TrendingUp, Star, Rocket, Eye, Flame, Trophy, Plus } from "lucide-react
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 import { useNavigate } from "react-router-dom";
+import { getApiData } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Community() {
   const [trending, setTrending] = useState<{ trendingProjects: any[], hotIdeas: any[] }>({ trendingProjects: [], hotIdeas: [] });
@@ -12,11 +14,10 @@ export default function Community() {
 
   useEffect(() => {
     const fetchTrending = async () => {
+      setLoading(true);
       try {
-        const res = await fetch("/api/v1/community/trending");
-        if (res.ok) {
-          setTrending(await res.json());
-        }
+        const data = await getApiData("/api/v1/community/trending");
+        setTrending(data);
       } catch (err) {
         console.error("Error fetching trending:", err);
       } finally {
@@ -43,8 +44,18 @@ export default function Community() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+             <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Skeleton className="h-80 rounded-[2.5rem] w-full" />
+                <Skeleton className="h-80 rounded-[2.5rem] w-full" />
+                <Skeleton className="h-80 rounded-[2.5rem] w-full" />
+                <Skeleton className="h-80 rounded-[2.5rem] w-full" />
+             </div>
+             <div className="lg:col-span-4 space-y-6">
+                <Skeleton className="h-24 rounded-2xl w-full" />
+                <Skeleton className="h-24 rounded-2xl w-full" />
+                <Skeleton className="h-24 rounded-2xl w-full" />
+             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

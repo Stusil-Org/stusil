@@ -14,6 +14,7 @@ import {
   Shield,
   Sun,
   Moon,
+  UserPlus
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CommandBarTrigger } from "./CommandBar";
@@ -25,6 +26,7 @@ const navItems = [
   { icon: Rocket, label: "Startups", path: "/startups" },
   { icon: FolderOpen, label: "Portfolio", path: "/portfolio" },
   { icon: MessageCircle, label: "Messages", path: "/messages" },
+  { icon: UserPlus, label: "Connections", path: "/connections" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
@@ -111,7 +113,7 @@ export function FloatingSidebar({
         })}
 
         {/* Admin - only for admin email */}
-        {user?.email === 'nitnaware.prathmesh@gmail.com' && (
+        {user?.email === 'stusil.org@gmail.com' && (
           <>
             <div className="my-3 h-px bg-border/30" />
             {adminItems.map((item) => {

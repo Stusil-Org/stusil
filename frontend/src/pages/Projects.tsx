@@ -7,6 +7,8 @@ import {
   Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe, ArrowUpRight,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
+import { getApiData, apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function timeAgo(dateStr: string) {
   const d = new Date(dateStr);
@@ -86,6 +88,7 @@ const roleColors = [
 
 export default function Projects() {
   const [projects, setProjects] = useState<ProjectType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ProjectType | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState("");
@@ -114,10 +117,7 @@ export default function Projects() {
       if (proj) {
         setSelected(proj);
       } else {
-        // Fetch it if not in list
-        fetch(`/api/v1/projects/${projectId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        }).then(res => res.ok && res.json()).then(data => data && setSelected(data));
+        getApiData(`/api/v1/projects/${projectId}`).then(data => data && setSelected(data));
       }
     }
   }, [projects]);
@@ -142,26 +142,24 @@ export default function Projects() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
       try {
-        const res = await fetch("/api/v1/auth/me", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setUser(await res.json());
+        const data = await getApiData("/api/v1/auth/me");
+        setUser(data);
       } catch (err) { console.error(err); }
     };
     fetchUser();
   }, []);
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/v1/projects", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) setProjects(data);
-      }
-    } catch (err) { console.error(err); }
+      const data = await getApiData("/api/v1/projects");
+      if (Array.isArray(data)) setProjects(data);
+    } catch (err) { 
+      console.error(err); 
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchProjects(); }, []);
@@ -184,9 +182,8 @@ export default function Projects() {
   const handleCreateProject = async () => {
     if (!newProject.title) return;
     try {
-      const res = await fetch("/api/v1/projects/create", {
+      const res = await apiFetch("/api/v1/projects/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({
           ...newProject,
           team_size: newRoles.length + 1,
@@ -341,8 +338,13 @@ export default function Projects() {
 
         {/* Project Cards Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((project, i) => {
+          {loading ? (
+            Array(6).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-80 rounded-[2.5rem] w-full" />
+            ))
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filtered.map((project, i) => {
               const openRoles = project.roles?.filter(r => !r.is_filled) || [];
               const cardGradients = [
                 "from-blue-600 via-indigo-600 to-violet-600",
@@ -453,6 +455,7 @@ export default function Projects() {
               );
             })}
           </AnimatePresence>
+          )}
         </div>
       </motion.div>
 

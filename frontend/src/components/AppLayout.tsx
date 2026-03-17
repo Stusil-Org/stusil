@@ -10,6 +10,7 @@ const mobileNavItems = [
   { label: "Dashboard", path: "/dashboard" },
   { label: "Projects", path: "/projects" },
   { label: "Community", path: "/community" },
+  { label: "Connections", path: "/connections" },
   { label: "Startups", path: "/startups" },
   { label: "Portfolio", path: "/portfolio" },
   { label: "Messages", path: "/messages" },
@@ -94,7 +95,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {item.label}
                 </button>
               ))}
-              {user?.email === 'nitnaware.prathmesh@gmail.com' && (
+              {user?.email === 'stusil.org@gmail.com' && (
                 <button
                   onClick={() => { navigate("/admin"); setMobileOpen(false); }}
                   className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${

@@ -5,8 +5,10 @@ import {
   User, Loader2, Plus, Smile
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
+import { getApiData, apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ==================== Types ====================
 
@@ -117,24 +119,23 @@ export default function Messages() {
   // ---- Fetch current user ----
   useEffect(() => {
     const fetchUser = async () => {
+      const token = localStorage.getItem("token");
       if (!token) return;
       try {
-        const res = await fetch("/api/v1/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) setUser(await res.json());
+        const data = await getApiData("/api/v1/auth/me");
+        setUser(data);
       } catch (err) {
         console.error("Error fetching user", err);
       }
     };
     fetchUser();
-  }, [token]);
+  }, []);
 
   // ---- Socket setup ----
   useEffect(() => {
     if (!user) return;
 
-    const socket = io({
+    const socket = io(import.meta.env.VITE_API_URL || '', {
       transports: ["websocket", "polling"],
     });
     socketRef.current = socket;
@@ -192,23 +193,15 @@ export default function Messages() {
 
   // ---- Fetch conversations ----
   const fetchConversations = useCallback(async () => {
+    const token = localStorage.getItem("token");
     if (!token) return;
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const [directRes, projectRes] = await Promise.all([
-        fetch("/api/v1/messages/conversations", { headers }),
-        fetch("/api/v1/messages/projects", { headers }),
+      const [direct, projects] = await Promise.all([
+        getApiData("/api/v1/messages/conversations"),
+        getApiData("/api/v1/messages/projects"),
       ]);
 
-      let allConvs: Conversation[] = [];
-      if (directRes.ok) {
-        const direct: DirectConversation[] = await directRes.json();
-        allConvs = [...allConvs, ...direct];
-      }
-      if (projectRes.ok) {
-        const projects: ProjectConversation[] = await projectRes.json();
-        allConvs = [...allConvs, ...projects];
-      }
+      let allConvs: Conversation[] = [...(direct || []), ...(projects || [])];
 
       // Sort by timestamp
       allConvs.sort(
@@ -220,7 +213,11 @@ export default function Messages() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   useEffect(() => {
     fetchConversations();
@@ -242,25 +239,20 @@ export default function Messages() {
     // Fetch user info and create a temporary conversation
     const fetchTargetUser = async () => {
       try {
-        const res = await fetch("/api/v1/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const users = await res.json();
-          const target = users.find((u: any) => u.id === preSelectedUserId);
-          if (target) {
-            const tempConv: DirectConversation = {
-              id: target.id,
-              type: "direct",
-              userId: target.id,
-              user: target,
-              name: target.full_name,
-              lastMessage: null,
-              timestamp: new Date().toISOString(),
-            };
-            setConversations((prev) => [tempConv, ...prev]);
-            setActiveConv(tempConv);
-          }
+        const users = await getApiData("/api/v1/users");
+        const target = users.find((u: any) => u.id === preSelectedUserId);
+        if (target) {
+          const tempConv: DirectConversation = {
+            id: target.id,
+            type: "direct",
+            userId: target.id,
+            user: target,
+            name: target.full_name,
+            lastMessage: null,
+            timestamp: new Date().toISOString(),
+          };
+          setConversations((prev) => [tempConv, ...prev]);
+          setActiveConv(tempConv);
         }
       } catch (err) {
         console.error("Error fetching target user:", err);
@@ -284,12 +276,8 @@ export default function Messages() {
           url = `/api/v1/messages/project/${activeConv.id}`;
         }
 
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          setMessages(await res.json());
-        }
+        const data = await getApiData(url);
+        setMessages(data);
       } catch (err) {
         console.error("Error fetching messages:", err);
       } finally {
@@ -310,13 +298,8 @@ export default function Messages() {
     if (!showNewChat || !token) return;
     const fetchConnections = async () => {
       try {
-        const res = await fetch("/api/v1/connections", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setConnectedUsers(data.connectedUsers || []);
-        }
+        const data = await getApiData("/api/v1/connections");
+        setConnectedUsers(data.connectedUsers || []);
       } catch (err) {
         console.error(err);
       }
@@ -344,12 +327,8 @@ export default function Messages() {
         body = { message_text: newMsg.trim() };
       }
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(body),
       });
 
@@ -443,15 +422,38 @@ export default function Messages() {
     return true;
   });
 
-  if (!user) {
+  if (loading) {
     return (
       <AppLayout>
-        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="mb-6">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="glass-card flex h-[calc(100vh-12rem)] overflow-hidden border border-border/50">
+          <div className="w-80 shrink-0 border-r border-border/30 p-3 space-y-4">
+            <Skeleton className="h-10 w-full rounded-xl" />
+            <div className="space-y-3">
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+          </div>
+          <div className="flex-1 p-6 flex flex-col gap-4">
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <div className="flex-1 space-y-4">
+              <Skeleton className="h-20 w-2/3 rounded-2xl" />
+              <Skeleton className="h-20 w-1/2 rounded-2xl ml-auto" />
+              <Skeleton className="h-20 w-3/4 rounded-2xl" />
+            </div>
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </div>
         </div>
       </AppLayout>
     );
   }
+
+  if (!user) return null;
 
   return (
     <AppLayout>
