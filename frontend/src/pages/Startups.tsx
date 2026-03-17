@@ -9,6 +9,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
 import { getApiData, apiFetch } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/modals/ConfirmationModal";
+import { ShareModal } from "@/components/modals/ShareModal";
 
 function timeAgo(dateStr: string) {
   const d = new Date(dateStr);
@@ -89,6 +91,15 @@ export default function Startups() {
   const [applyingRole, setApplyingRole] = useState<StartupRoleType | null>(null);
   const [applyAnswers, setApplyAnswers] = useState<string[]>([]);
   const [viewAppRole, setViewAppRole] = useState<StartupRoleType | null>(null);
+  
+  // Custom Modals State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [startupToDelete, setStartupToDelete] = useState<string | null>(null);
+  const [showMemberRemoveConfirm, setShowMemberRemoveConfirm] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{startupId: string, memberId: string} | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [startupToShare, setStartupToShare] = useState<{title: string, id: string} | null>(null);
+
   const navigate = useNavigate();
 
   // Create form
@@ -174,9 +185,8 @@ export default function Startups() {
   };
 
   const handleShare = (startup: StartupType) => {
-    const link = `${window.location.origin}/startups?id=${startup.id}`;
-    navigator.clipboard.writeText(link);
-    alert("Shareable link copied to clipboard! Share it with your friends.");
+    setStartupToShare({ title: startup.title, id: startup.id });
+    setShowShareModal(true);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,11 +213,8 @@ export default function Startups() {
         setApplyAnswers([]);
         const data = await getApiData(`/api/v1/startups/${selected.id}`);
         if (data) setSelected(data);
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to apply.");
       }
-    } catch (err) { console.error(err); alert("Error applying."); }
+    } catch (err) { console.error(err); }
   };
 
   const handleAppAction = async (applicationId: string, action: "accept" | "reject") => {
@@ -226,7 +233,6 @@ export default function Startups() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this startup idea?")) return;
     try {
       await apiFetch(`/api/v1/startups/${id}`, {
         method: "DELETE",
@@ -237,7 +243,6 @@ export default function Startups() {
   };
 
   const handleRemoveMember = async (startupId: string, memberId: string) => {
-    if (!window.confirm("Remove this member from the founding team?")) return;
     try {
       const res = await apiFetch(`/api/v1/startups/${startupId}/members/${memberId}`, {
         method: "DELETE",
@@ -246,13 +251,9 @@ export default function Startups() {
         await fetchStartups();
         const data = await getApiData(`/api/v1/startups/${startupId}`);
         if (data) setSelected(data);
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to remove member.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error removing member.");
     }
   };
 
@@ -441,7 +442,7 @@ export default function Startups() {
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleRemoveMember(selected.id, m.id);
+                                  setMemberToRemove({ startupId: selected.id, memberId: m.id }); setShowMemberRemoveConfirm(true); 
                                 }}
                                 className="ml-1 rounded-full p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
                                 title="Remove member"
@@ -511,7 +512,7 @@ export default function Startups() {
                       <button onClick={() => handleEdit(selected)} className="glow-button-outline flex items-center gap-2 text-sm">
                         <UserPlus className="h-4 w-4" /> Edit Details
                       </button>
-                      <button onClick={() => handleDelete(selected.id)} className="glow-button-outline flex items-center gap-2 text-sm border-red-500/50 text-red-500 hover:bg-red-500/10">
+                      <button onClick={() => { setStartupToDelete(selected.id); setShowDeleteConfirm(true); }} className="glow-button-outline flex items-center gap-2 text-sm border-red-500/50 text-red-500 hover:bg-red-500/10">
                         <Trash2 className="h-4 w-4" /> Delete
                       </button>
                     </>
@@ -715,6 +716,33 @@ export default function Startups() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => { setShowDeleteConfirm(false); setStartupToDelete(null); }}
+        onConfirm={() => startupToDelete && handleDelete(startupToDelete)}
+        title="Delete Startup Idea"
+        message="Are you sure you want to delete this startup idea? This action is permanent and cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showMemberRemoveConfirm}
+        onClose={() => { setShowMemberRemoveConfirm(false); setMemberToRemove(null); }}
+        onConfirm={() => memberToRemove && handleRemoveMember(memberToRemove.startupId, memberToRemove.memberId)}
+        title="Remove Team Member"
+        message="Are you sure you want to remove this member from your founding team?"
+        confirmText="Remove"
+        variant="warning"
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => { setShowShareModal(false); setStartupToShare(null); }}
+        title={startupToShare?.title || "Startup Idea"}
+        link={`${window.location.origin}/startups?id=${startupToShare?.id}`}
+      />
     </AppLayout>
   );
 }

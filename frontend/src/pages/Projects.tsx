@@ -9,6 +9,8 @@ import {
 import { AppLayout } from "@/components/AppLayout";
 import { getApiData, apiFetch } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/modals/ConfirmationModal";
+import { ShareModal } from "@/components/modals/ShareModal";
 
 function timeAgo(dateStr: string) {
   const d = new Date(dateStr);
@@ -97,6 +99,15 @@ export default function Projects() {
   const [applyAnswers, setApplyAnswers] = useState<string[]>([]);
   const [viewAppRole, setViewAppRole] = useState<RoleType | null>(null);
   const [selectedApp, setSelectedApp] = useState<any>(null);
+  
+  // Custom Modals State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [showMemberRemoveConfirm, setShowMemberRemoveConfirm] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{projectId: string, memberId: string} | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [projectToShare, setProjectToShare] = useState<{title: string, id: string} | null>(null);
+
   const navigate = useNavigate();
 
   // Create form
@@ -122,10 +133,14 @@ export default function Projects() {
     }
   }, [projects]);
 
-  const handleCopyLink = (id: string) => {
+  const handleCopyLink = (id: string, title?: string) => {
     const url = `${window.location.origin}${window.location.pathname}?project=${id}`;
-    navigator.clipboard.writeText(url);
-    alert("Project link copied to clipboard!");
+    if (title) {
+      setProjectToShare({ title, id });
+      setShowShareModal(true);
+    } else {
+      navigator.clipboard.writeText(url);
+    }
   };
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,34 +258,24 @@ export default function Projects() {
   };
 
   const handleRemoveMember = async (projectId: string, memberId: string) => {
-    if (!window.confirm("Are you sure you want to remove this member?")) return;
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}/members/${memberId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const res = await apiFetch(`/api/v1/projects/${projectId}/members/${memberId}`, {
+        method: "DELETE"
       });
       if (res.ok) {
         await fetchProjects();
-        const pRes = await fetch(`/api/v1/projects/${projectId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        if (pRes.ok) setSelected(await pRes.json());
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to remove member.");
+        const data = await getApiData(`/api/v1/projects/${projectId}`);
+        if (data) setSelected(data);
       }
     } catch (err) {
       console.error(err);
-      alert("Error removing member.");
     }
   };
 
   const handleDelete = async (projectId: string) => {
-    if (!window.confirm("Delete this project?")) return;
     try {
-      await fetch(`/api/v1/projects/${projectId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      await apiFetch(`/api/v1/projects/${projectId}`, {
+        method: "DELETE"
       });
       await fetchProjects();
       setSelected(null);
@@ -389,7 +394,7 @@ export default function Projects() {
                     </div>
 
                     <div className="absolute top-4 right-4 group-hover:translate-y-[-2px] transition-transform">
-                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors" onClick={(e) => { e.stopPropagation(); handleCopyLink(project.id); }}>
+                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors" onClick={(e) => { e.stopPropagation(); handleCopyLink(project.id, project.title); }}>
                           <Share2 className="h-3.5 w-3.5" />
                        </div>
                     </div>
@@ -523,7 +528,7 @@ export default function Projects() {
                                 <p className="text-[9px] font-bold text-muted-foreground uppercase">{m.role}</p>
                               </div>
                               {(selected.owner_id === user?.id && m.user.id !== user?.id) && (
-                                <button onClick={() => handleRemoveMember(selected.id, m.id)} className="ml-2 h-6 w-6 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center opacity-0 group-hover/mem:opacity-100 transition-opacity">
+                                <button onClick={() => { setMemberToRemove({ projectId: selected.id, memberId: m.id }); setShowMemberRemoveConfirm(true); }} className="ml-2 h-6 w-6 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center opacity-0 group-hover/mem:opacity-100 transition-opacity">
                                   <Trash2 className="h-3 w-3" />
                                 </button>
                               )}
@@ -581,7 +586,7 @@ export default function Projects() {
 
                       <div className="pt-6 border-t border-border/30">
                         {selected.owner_id === user?.id ? (
-                          <button onClick={() => handleDelete(selected.id)} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
+                          <button onClick={() => { setProjectToDelete(selected.id); setShowDeleteConfirm(true); }} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
                             <Trash2 className="h-4 w-4" /> Dissolve Project
                           </button>
                         ) : (
@@ -967,6 +972,33 @@ export default function Projects() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => { setShowDeleteConfirm(false); setProjectToDelete(null); }}
+        onConfirm={() => projectToDelete && handleDelete(projectToDelete)}
+        title="Dissolve Project"
+        message="Are you sure you want to dissolve this project? This action is permanent and all associated data will be lost."
+        confirmText="Dissolve"
+        variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showMemberRemoveConfirm}
+        onClose={() => { setShowMemberRemoveConfirm(false); setMemberToRemove(null); }}
+        onConfirm={() => memberToRemove && handleRemoveMember(memberToRemove.projectId, memberToRemove.memberId)}
+        title="Remove Member"
+        message="Are you sure you want to remove this member from the project team?"
+        confirmText="Remove"
+        variant="warning"
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => { setShowShareModal(false); setProjectToShare(null); }}
+        title={projectToShare?.title || "Project"}
+        link={`${window.location.origin}${window.location.pathname}?project=${projectToShare?.id}`}
+      />
     </AppLayout>
   );
 }
