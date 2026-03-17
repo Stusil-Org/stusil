@@ -237,9 +237,8 @@ export default function Projects() {
   const handleApply = async () => {
     if (!selected || !applyingRole) return;
     try {
-      const res = await fetch(`/api/v1/projects/${selected.id}/roles/${applyingRole.id}/apply`, {
+      const res = await apiFetch(`/api/v1/projects/${selected.id}/roles/${applyingRole.id}/apply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ answers: applyAnswers }),
       });
       if (res.ok) {
@@ -261,9 +260,8 @@ export default function Projects() {
   const handleAppAction = async (applicationId: string, action: "accept" | "reject") => {
     if (!selected) return;
     try {
-      const res = await fetch(`/api/v1/projects/${selected.id}/applications/${applicationId}`, {
+      const res = await apiFetch(`/api/v1/projects/${selected.id}/applications/${applicationId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
@@ -387,10 +385,18 @@ export default function Projects() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.03, type: "spring", stiffness: 100 }}
                   onClick={async () => {
-                    const res = await fetch(`/api/v1/projects/${project.id}`, {
-                      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                    });
-                    if (res.ok) setSelected(await res.json());
+                    setApplyingRole(null);
+                    setViewAppRole(null);
+                    try {
+                      const res = await apiFetch(`/api/v1/projects/${project.id}`);
+                      if (res.ok) {
+                        setSelected(await res.json());
+                      } else {
+                        setSelected(project);
+                      }
+                    } catch (e) {
+                      setSelected(project);
+                    }
                   }}
                   className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-border/50 bg-secondary/5 backdrop-blur-md transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 cursor-pointer"
                 >
@@ -506,10 +512,19 @@ export default function Projects() {
                              <button 
                                onClick={async (e) => {
                                  e.stopPropagation();
-                                 const res = await fetch(`/api/v1/projects/${project.id}`, {
-                                   headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                                 });
-                                 if (res.ok) setSelected(await res.json());
+                                 setApplyingRole(null);
+                                 setViewAppRole(null);
+                                 try {
+                                   const res = await apiFetch(`/api/v1/projects/${project.id}`);
+                                   if (res.ok) {
+                                     const data = await res.json();
+                                     setSelected(data);
+                                   } else {
+                                     setSelected(project);
+                                   }
+                                 } catch (err) {
+                                   setSelected(project);
+                                 }
                                }}
                                className="flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest hover:translate-x-1 transition-transform"
                              >
@@ -678,9 +693,8 @@ export default function Projects() {
                              <button onClick={async () => {
                                 const reason = window.prompt("Why are you reporting this project?");
                                 if (!reason) return;
-                                await fetch("/api/v1/reports/create", {
+                                await apiFetch("/api/v1/reports/create", {
                                   method: "POST",
-                                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
                                   body: JSON.stringify({ type: "project", target_id: selected.id, target_name: selected.title, reason })
                                 });
                                 alert("Project reported.");

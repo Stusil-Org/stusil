@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, User, Search, MessageCircle, UserMinus, UserPlus, Users, ExternalLink } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
+import { apiFetch, getApiData } from "@/lib/api";
 
 interface PendingRequest {
   id: string;
@@ -54,29 +55,22 @@ export default function Connections() {
 
   const fetchConnectionsData = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const [pRes, cRes, uRes] = await Promise.all([
-        fetch("/api/v1/connections/pending", { headers }),
-        fetch("/api/v1/connections", { headers }),
-        fetch("/api/v1/users", { headers }),
+      const [pendingData, connData, usersData] = await Promise.all([
+        getApiData("/api/v1/connections/pending").catch(() => []),
+        getApiData("/api/v1/connections").catch(() => ({ connections: [], connectedUsers: [], pendingRequestsSent: [] })),
+        getApiData("/api/v1/users").catch(() => []),
       ]);
 
-      if (pRes.ok) setPendingRequests(await pRes.json());
-      if (cRes.ok) {
-        const data = await cRes.json();
-        const connectedUsers = (data.connectedUsers || []).map((u: any, i: number) => ({
-          ...u,
-          connectionId: data.connections?.[i]?.id || null,
-        }));
-        setConnections(connectedUsers);
-        setPendingRequestsSent(data.pendingRequestsSent || []);
-      }
-      if (uRes.ok) {
-        const users = await uRes.json();
-        setAllUsers(users);
-      }
+      setPendingRequests(pendingData);
+      
+      const connectedUsers = (connData.connectedUsers || []).map((u: any, i: number) => ({
+        ...u,
+        connectionId: connData.connections?.[i]?.id || null,
+      }));
+      setConnections(connectedUsers);
+      setPendingRequestsSent(connData.pendingRequestsSent || []);
+      
+      setAllUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       console.error("Error fetching connections data:", err);
     } finally {
@@ -90,12 +84,8 @@ export default function Connections() {
 
   const handleAction = async (requestId: string, action: "accept" | "reject") => {
     try {
-      const res = await fetch(`/api/v1/connections/${requestId}`, {
+      const res = await apiFetch(`/api/v1/connections/${requestId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
@@ -113,11 +103,8 @@ export default function Connections() {
   const handleRemoveConnection = async (connectionId: string) => {
     if (!window.confirm("Remove this connection?")) return;
     try {
-      const res = await fetch(`/api/v1/connections/${connectionId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      const res = await apiFetch(`/api/v1/connections/${connectionId}`, {
+        method: "DELETE"
       });
       if (res.ok) {
         fetchConnectionsData();
@@ -133,12 +120,8 @@ export default function Connections() {
   const handleConnect = async (receiverId: string) => {
     setConnectingId(receiverId);
     try {
-      const res = await fetch("/api/v1/connections/request", {
+      const res = await apiFetch("/api/v1/connections/request", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: JSON.stringify({ receiver_id: receiverId }),
       });
       const data = await res.json();
@@ -164,15 +147,15 @@ export default function Connections() {
       !connectedIds.has(u.id) &&
       !pendingReceivedIds.has(u.id) &&
       !pendingSentIds.has(u.id) &&
-      (u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-        u.username?.toLowerCase().includes(search.toLowerCase()) ||
-        u.field_of_study?.toLowerCase().includes(search.toLowerCase()))
+      ((u.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (u.username || "").toLowerCase().includes(search.toLowerCase()) ||
+        (u.field_of_study || "").toLowerCase().includes(search.toLowerCase()))
   );
 
   const filteredConnections = connections.filter(
     (c) =>
-      c.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      c.username?.toLowerCase().includes(search.toLowerCase())
+      (c.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (c.username || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const tabs = [
