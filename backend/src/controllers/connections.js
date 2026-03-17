@@ -106,7 +106,28 @@ const getConnections = async (req, res) => {
       return conn.sender;
     });
 
-    return res.status(200).json({ connections, connectedUsers });
+    const pendingRequestsSent = await prisma.connection.findMany({
+      where: {
+        sender_id: user_id,
+        status: "pending"
+      },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            full_name: true,
+            profile_image: true,
+          }
+        }
+      }
+    });
+
+    return res.status(200).json({ 
+      connections, 
+      connectedUsers,
+      pendingRequestsSent 
+    });
   } catch (error) {
     console.error("Error fetching connections:", error);
     return res.status(500).json({ error: "Server error fetching connections" });

@@ -149,12 +149,23 @@ export default function Portfolio() {
     } catch (err) { console.error(err); }
   };
 
+  const formatLink = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    return `https://${url}`;
+  };
+
   const handleUpdateLinks = async () => {
+    const formattedLinks = {
+      github: formatLink(linksInput.github),
+      linkedin: formatLink(linksInput.linkedin),
+      website: formatLink(linksInput.website),
+    };
     try {
-      const res = await fetch("/api/v1/portfolio/update", {
+      const res = await fetch("/api/v1/users/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ links: linksInput }),
+        body: JSON.stringify({ links: formattedLinks }),
       });
       if (res.ok) {
         await fetchPortfolio();

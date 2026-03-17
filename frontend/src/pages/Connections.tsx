@@ -45,6 +45,7 @@ export default function Connections() {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [allUsers, setAllUsers] = useState<SuggestedUser[]>([]);
+  const [pendingRequestsSent, setPendingRequestsSent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"connections" | "pending" | "discover">("connections");
@@ -65,21 +66,17 @@ export default function Connections() {
       if (pRes.ok) setPendingRequests(await pRes.json());
       if (cRes.ok) {
         const data = await cRes.json();
-        // Map connections to include connection document ID
-        const mapped = (data.connections || []).map((conn: any) => {
-          const currentUserId = data.connectedUsers?.[0]?.id; // not reliable
-          const user = conn.sender_id === conn.receiver?.id ? conn.sender : conn.receiver;
-          // Try to get the other user from connectedUsers
-          return { ...user, connectionId: conn.id };
-        });
-        // Use connectedUsers but attach connectionId
         const connectedUsers = (data.connectedUsers || []).map((u: any, i: number) => ({
           ...u,
           connectionId: data.connections?.[i]?.id || null,
         }));
         setConnections(connectedUsers);
+        setPendingRequestsSent(data.pendingRequestsSent || []);
       }
-      if (uRes.ok) setAllUsers(await uRes.json());
+      if (uRes.ok) {
+        const users = await uRes.json();
+        setAllUsers(users);
+      }
     } catch (err) {
       console.error("Error fetching connections data:", err);
     } finally {
@@ -159,11 +156,14 @@ export default function Connections() {
   };
 
   const connectedIds = new Set(connections.map((c) => c.id));
-  const pendingIds = new Set(pendingRequests.map((p) => p.sender.id));
+  const pendingReceivedIds = new Set(pendingRequests.map((p) => p.sender.id));
+  const pendingSentIds = new Set(pendingRequestsSent.map((p) => p.receiver?.id || p.receiver_id));
   
   const discoverUsers = allUsers.filter(
     (u) =>
       !connectedIds.has(u.id) &&
+      !pendingReceivedIds.has(u.id) &&
+      !pendingSentIds.has(u.id) &&
       (u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
         u.username?.toLowerCase().includes(search.toLowerCase()) ||
         u.field_of_study?.toLowerCase().includes(search.toLowerCase()))
@@ -399,7 +399,7 @@ export default function Connections() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {discoverUsers.map((user, i) => {
-                      const isPending = pendingIds.has(user.id);
+                      const isPending = pendingReceivedIds.has(user.id) || pendingSentIds.has(user.id);
                       const isConnected = connectedIds.has(user.id);
                       return (
                         <motion.div

@@ -462,17 +462,61 @@ export default function Projects() {
                           )}
                        </div>
 
-                       <div className="flex items-center justify-between pt-4 border-t border-border/30">
-                          <div className="flex items-center gap-2">
-                             <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-[8px] font-black text-primary border border-primary/20">
-                                {project.owner?.full_name?.substring(0,1).toUpperCase()}
-                             </div>
-                             <span className="text-[10px] font-bold text-muted-foreground uppercase">{project.owner?.full_name}</span>
-                          </div>
-                          <button className="flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest hover:translate-x-1 transition-transform">
-                             View Mission <ArrowUpRight className="h-3 w-3" />
-                          </button>
-                       </div>
+                        <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                           <div className="flex items-center gap-2">
+                              <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-[8px] font-black text-primary border border-primary/20">
+                                 {project.owner?.full_name?.substring(0,1).toUpperCase()}
+                              </div>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase">{project.owner?.full_name}</span>
+                           </div>
+                           
+                           <div className="flex items-center gap-3">
+                             {project.owner_id === user?.id && (
+                               <div className="flex items-center gap-2 mr-2">
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setEditingProject(project);
+                                     setNewProject({
+                                       title: project.title,
+                                       description: project.description,
+                                       field: project.field,
+                                       banner_image: project.banner_image || ""
+                                     });
+                                     setShowCreate(true);
+                                   }}
+                                   className="p-1.5 rounded-lg border border-primary/20 text-primary hover:bg-primary/20 hover:scale-110 transition-all"
+                                   title="Edit Strategy"
+                                 >
+                                   <Pencil className="h-3 w-3" />
+                                 </button>
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setProjectToDelete(project.id);
+                                     setShowDeleteConfirm(true);
+                                   }}
+                                   className="p-1.5 rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/20 hover:scale-110 transition-all"
+                                   title="Dissolve"
+                                 >
+                                   <Trash2 className="h-3 w-3" />
+                                 </button>
+                               </div>
+                             )}
+                             <button 
+                               onClick={async (e) => {
+                                 e.stopPropagation();
+                                 const res = await fetch(`/api/v1/projects/${project.id}`, {
+                                   headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                                 });
+                                 if (res.ok) setSelected(await res.json());
+                               }}
+                               className="flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest hover:translate-x-1 transition-transform"
+                             >
+                               View Mission <ArrowUpRight className="h-3 w-3" />
+                             </button>
+                           </div>
+                        </div>
                     </div>
                   </div>
                 </motion.div>
