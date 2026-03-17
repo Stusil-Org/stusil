@@ -32,30 +32,18 @@ const adminItems = [
   { icon: Shield, label: "Admin", path: "/admin" },
 ];
 
-export function FloatingSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
-  const [user, setUser] = useState<{ full_name: string; username: string; email: string } | null>(null);
+export function FloatingSidebar({ 
+  collapsed, 
+  onToggle, 
+  user 
+}: { 
+  collapsed: boolean; 
+  onToggle: () => void;
+  user: { full_name: string; username: string; email: string } | null;
+}) {
   const [isDark, setIsDark] = useState(() => !document.documentElement.classList.contains("light"));
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      try {
-        const res = await fetch("/api/v1/auth/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        }
-      } catch (err) {
-        console.error("Error fetching admin user in sidebar", err);
-      }
-    };
-    fetchUser();
-  }, []);
 
   // Theme toggle
   useEffect(() => {

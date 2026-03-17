@@ -9,6 +9,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
+import { getApiData, apiFetch } from "@/lib/api";
 
 interface NotificationType {
   id: string;
@@ -71,40 +72,35 @@ const Index = () => {
 
   useEffect(() => {
     if (!token) return;
-    const headers = { Authorization: `Bearer ${token}` };
-
     const fetchAll = async () => {
       try {
-        const userRes = await fetch("/api/v1/auth/me", { headers });
-        if (userRes.ok) { const userData = await userRes.json(); setUser(userData); }
+        const userData = await getApiData("/api/v1/auth/me");
+        setUser(userData);
 
-        const projRes = await fetch("/api/v1/projects", { headers });
-        if (projRes.ok) { const pData = await projRes.json(); setProjectCount(Array.isArray(pData) ? pData.length : 0); }
+        const pData = await getApiData("/api/v1/projects");
+        setProjectCount(Array.isArray(pData) ? pData.length : 0);
 
-        const connRes = await fetch("/api/v1/connections", { headers });
-        if (connRes.ok) { const cData = await connRes.json(); setConnectionCount(cData.connectedUsers?.length || 0); }
+        const cData = await getApiData("/api/v1/connections");
+        setConnectionCount(cData.connectedUsers?.length || 0);
 
-        const notifRes = await fetch("/api/v1/notifications", { headers });
-        if (notifRes.ok) { 
-          const nData = await notifRes.json(); 
-          setNotifications(nData); 
-          setUnreadCount(nData.filter((n: NotificationType) => !n.is_read).length);
-          
-          if (Array.isArray(nData)) {
-            const actItems: ActivityItem[] = nData.slice(0, 5).map((n: NotificationType) => ({
-              id: n.id,
-              icon: n.type === "application" ? Briefcase : n.type === "accepted" ? Check : n.type === "connection" ? Users : Bell,
-              label: n.body,
-              time: timeAgo(n.created_at),
-              color: n.type === "accepted" ? "text-emerald-500 bg-emerald-500/10" : n.type === "application" ? "text-primary bg-primary/10" : "text-amber-500 bg-amber-500/10",
-              link: n.link || undefined,
-            }));
-            setActivity(actItems);
-          }
+        const nData = await getApiData("/api/v1/notifications");
+        setNotifications(nData); 
+        setUnreadCount(nData.filter((n: NotificationType) => !n.is_read).length);
+        
+        if (Array.isArray(nData)) {
+          const actItems: ActivityItem[] = nData.slice(0, 5).map((n: NotificationType) => ({
+            id: n.id,
+            icon: n.type === "application" ? Briefcase : n.type === "accepted" ? Check : n.type === "connection" ? Users : Bell,
+            label: n.body,
+            time: timeAgo(n.created_at),
+            color: n.type === "accepted" ? "text-emerald-500 bg-emerald-500/10" : n.type === "application" ? "text-primary bg-primary/10" : "text-amber-500 bg-amber-500/10",
+            link: n.link || undefined,
+          }));
+          setActivity(actItems);
         }
 
-        const allProj = await (await fetch("/api/v1/projects", { headers })).json();
-        const allStartups = await (await fetch("/api/v1/startups", { headers })).json();
+        const allProj = await getApiData("/api/v1/projects");
+        const allStartups = await getApiData("/api/v1/startups");
         
         const recs: Recommendation[] = [];
         if (Array.isArray(allProj)) {
@@ -146,7 +142,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!user) return;
-    const socket = io({ transports: ["websocket", "polling"] });
+    const socket = io(import.meta.env.VITE_API_URL || '', { transports: ["websocket", "polling"] });
     socketRef.current = socket;
     socket.on("connect", () => { socket.emit("join_personal", user.id); });
     socket.on("new_notification", (notif: NotificationType) => {
@@ -166,7 +162,7 @@ const Index = () => {
 
   const markAllRead = async () => {
     try {
-      await fetch("/api/v1/notifications/read-all", { method: "PUT", headers: { Authorization: `Bearer ${token}` } });
+      await apiFetch("/api/v1/notifications/read-all", { method: "PUT" });
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
     } catch (err) { console.error(err); }

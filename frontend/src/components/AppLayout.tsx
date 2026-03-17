@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FloatingSidebar } from "./FloatingSidebar";
 import { CommandBar } from "./CommandBar";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getApiData } from "@/lib/api";
 
 const mobileNavItems = [
   { label: "Dashboard", path: "/dashboard" },
@@ -31,19 +32,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     localStorage.setItem("sidebar_collapsed", String(newVal));
   };
 
-  import("react").then((React) => {
-    React.useEffect(() => {
-      const fetchUser = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        try {
-          const res = await fetch("/api/v1/auth/me", { headers: { Authorization: `Bearer ${token}` } });
-          if (res.ok) setUser(await res.json());
-        } catch (err) {}
-      };
-      fetchUser();
-    }, []);
-  });
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const data = await getApiData("/api/v1/auth/me");
+        setUser(data);
+      } catch (err) {
+        console.error("Error fetching user in layout:", err);
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -56,7 +57,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block transition-all duration-300">
-        <FloatingSidebar collapsed={collapsed} onToggle={handleToggleCollapse} />
+        <FloatingSidebar collapsed={collapsed} onToggle={handleToggleCollapse} user={user} />
       </div>
 
       {/* Mobile Header */}
