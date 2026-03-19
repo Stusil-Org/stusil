@@ -1,16 +1,16 @@
 {
-    "rewrites": [
-        {
-            "source": "/api/:path*",
-            "destination": "https://stusil.onrender.com/api/:path*"
-        },
-        {
-            "source": "/socket.io/:path*",
-            "destination": "https://stusil.onrender.com/socket.io/:path*"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/"
-        }
-    ]
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://stusil.onrender.com/api/$1"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://stusil.onrender.com/socket.io/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
