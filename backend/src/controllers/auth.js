@@ -5,6 +5,12 @@ const prisma = require('../services/db');
 exports.signup = async (req, res) => {
   try {
     const { email, password, username, full_name, university, field_of_study, skill_level, bio, profile_image } = req.body;
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
 
     const existingUser = await prisma.user.findFirst({
       where: {
