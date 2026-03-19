@@ -641,7 +641,8 @@ export default function Projects() {
                                        <button 
                                          onClick={() => {
                                            setApplyingRole(role);
-                                           const qs = role.questions ? JSON.parse(role.questions) : [];
+                                           let qs: string[] = [];
+                                           try { qs = role.questions ? (typeof role.questions === 'string' ? JSON.parse(role.questions) : role.questions) : []; } catch { qs = []; }
                                            setApplyAnswers(qs.map(() => ""));
                                          }}
                                          className="w-full mt-3 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
@@ -734,10 +735,10 @@ export default function Projects() {
                   <button onClick={() => setApplyingRole(null)} className="rounded-xl p-2 text-muted-foreground hover:bg-secondary"><X className="h-4 w-4" /></button>
                 </div>
 
-                {applyingRole.questions && JSON.parse(applyingRole.questions).length > 0 ? (
+                {(() => { try { const qs = applyingRole.questions ? (typeof applyingRole.questions === 'string' ? JSON.parse(applyingRole.questions) : applyingRole.questions) : []; return qs.length > 0; } catch { return false; } })() ? (
                   <div className="space-y-4">
                     <p className="text-xs text-muted-foreground">Please answer the following questions:</p>
-                    {JSON.parse(applyingRole.questions).map((q: string, qi: number) => (
+                    {(typeof applyingRole.questions === 'string' ? JSON.parse(applyingRole.questions) : applyingRole.questions).map((q: string, qi: number) => (
                       <div key={qi}>
                         <label className="mb-1.5 block text-xs font-medium text-foreground">{qi + 1}. {q}</label>
                         <textarea

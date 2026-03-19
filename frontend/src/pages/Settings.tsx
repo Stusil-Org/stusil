@@ -21,6 +21,7 @@ const sectionsBase = [
       { label: "Headline", key: "bio", type: "text", placeholder: "e.g., Computer Science · Class of 2027" },
       { label: "University", key: "university", type: "text", placeholder: "e.g., MIT, Stanford" },
       { label: "Field of Study", key: "field_of_study", type: "text", placeholder: "e.g., Software Engineering" },
+      { label: "Country", key: "country", type: "text", placeholder: "e.g., India, USA, Germany" },
     ],
   },
   {
@@ -94,6 +95,7 @@ export default function SettingsPage() {
       bio: formData.bio,
       university: formData.university,
       field_of_study: formData.field_of_study,
+      country: formData.country,
       links: JSON.stringify(links)
     };
 

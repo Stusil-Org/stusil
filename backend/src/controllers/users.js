@@ -28,12 +28,13 @@ const getAllUsers = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { bio, full_name, university, field_of_study, links } = req.body;
+    const { bio, full_name, university, field_of_study, links, country } = req.body;
     const updateData = {};
     if (bio !== undefined) updateData.bio = bio;
     if (full_name !== undefined) updateData.full_name = full_name;
     if (university !== undefined) updateData.university = university;
     if (field_of_study !== undefined) updateData.field_of_study = field_of_study;
+    if (country !== undefined) updateData.country = country;
     if (links !== undefined) updateData.links = typeof links === 'string' ? links : JSON.stringify(links);
 
     const user = await prisma.user.update({

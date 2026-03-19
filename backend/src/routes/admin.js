@@ -6,12 +6,25 @@ const {
 const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 
-// Simple admin check based on hardcoded email for now
-const adminMiddleware = (req, res, next) => {
-  if (req.user && req.user.email === 'nitnaware.prathmesh@gmail.com') {
-    next();
-  } else {
-    res.status(403).json({ error: 'Admin access required' });
+const prisma = require('../controllers/../services/db');
+
+// Admin check: look up the user from DB since JWT only stores { id }
+const adminMiddleware = async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ 
+      where: { id: req.user.id },
+      select: { email: true, role: true }
+    });
+    if (user && (user.email === 'nitnaware.prathmesh@gmail.com' || user.role === 'admin')) {
+      req.user.email = user.email;
+      req.user.role = user.role;
+      next();
+    } else {
+      res.status(403).json({ error: 'Admin access required' });
+    }
+  } catch (err) {
+    console.error('Admin middleware error:', err);
+    res.status(500).json({ error: 'Server error checking admin access' });
   }
 };
 

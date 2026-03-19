@@ -49,6 +49,8 @@ exports.getPortfolio = async (req, res) => {
         skill_level: user.skill_level,
         profile_image: user.profile_image,
         bio: user.bio,
+        links: user.links,
+        country: user.country,
       },
       portfolio: user.portfolio || {},
       projects: [...ownedProjects, ...joinedProjects],

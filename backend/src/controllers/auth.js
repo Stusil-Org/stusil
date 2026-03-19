@@ -100,6 +100,7 @@ exports.getMe = async (req, res) => {
         bio: true,
         profile_image: true,
         links: true,
+        country: true,
         role: true,
         created_at: true
       }

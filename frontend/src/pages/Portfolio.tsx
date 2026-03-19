@@ -76,7 +76,7 @@ export default function Portfolio() {
         name: user.full_name || user.username,
         title: user.field_of_study ? `${user.field_of_study} Student` : "University Student",
         university: user.university || "Campus",
-        location: "Local",
+        location: user.country || meData.country || "Not specified",
         bio: portfolio?.bio || user.bio || "Passionate about building cool tools.",
         email: user.email,
         profileImage: user.profile_image || null,
@@ -103,7 +103,7 @@ export default function Portfolio() {
           date: new Date(s.created_at).toLocaleDateString(),
           color: colors[(i + 2) % colors.length]
         })),
-        links: portfolio?.links ? JSON.parse(portfolio.links) : { github: "https://github.com", linkedin: "https://linkedin.com", website: "student.dev" },
+        links: (() => { try { if (user.links) return typeof user.links === 'string' ? JSON.parse(user.links) : user.links; if (portfolio?.links) return typeof portfolio.links === 'string' ? JSON.parse(portfolio.links) : portfolio.links; return { github: "", linkedin: "", website: "" }; } catch { return { github: "", linkedin: "", website: "" }; } })(),
         stats: { 
           projects: projects.length, 
           startups: (portData.startup_ideas?.length || 0),
