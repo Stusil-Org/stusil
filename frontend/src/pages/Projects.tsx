@@ -859,22 +859,30 @@ export default function Projects() {
                           </div>
                         </div>
 
-                        {selectedApp.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => handleAppAction(selectedApp.id, 'reject')}
-                              className="rounded-xl px-4 py-2 text-xs font-bold text-muted-foreground border border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
-                            >
-                              Reject
-                            </button>
-                            <button 
-                              onClick={() => handleAppAction(selectedApp.id, 'accept')}
-                              className="glow-button !text-xs !py-2 !px-4"
-                            >
-                              Accept Applicant
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-2 items-center">
+                          <button 
+                            onClick={() => window.open(`/u/${selectedApp.user.username}`, '_blank')}
+                            className="rounded-xl px-4 py-2 text-xs font-bold text-primary border border-primary/20 hover:bg-primary/10 transition-all font-sans"
+                          >
+                            View Portfolio
+                          </button>
+                          {selectedApp.status === 'pending' && (
+                            <>
+                              <button 
+                                onClick={() => handleAppAction(selectedApp.id, 'reject')}
+                                className="rounded-xl px-4 py-2 text-xs font-bold text-muted-foreground border border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
+                              >
+                                Reject
+                              </button>
+                              <button 
+                                onClick={() => handleAppAction(selectedApp.id, 'accept')}
+                                className="glow-button !text-xs !py-2 !px-4"
+                              >
+                                Accept Applicant
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

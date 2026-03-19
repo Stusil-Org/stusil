@@ -104,7 +104,7 @@ export default function Landing() {
           <button onClick={() => navigate("/login")} className="text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-xl border border-border/50 hover:border-primary/30">
             Login
           </button>
-          <button onClick={() => navigate("/get-started")} className="glow-button px-5 py-2.5 text-sm !rounded-xl">
+          <button onClick={() => navigate("/join")} className="glow-button px-5 py-2.5 text-sm !rounded-xl">
             Get Started
           </button>
         </div>
@@ -140,7 +140,7 @@ export default function Landing() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/get-started")}
+                onClick={() => navigate("/join")}
                 className="glow-button flex items-center justify-center gap-2 px-8 py-4 text-base !rounded-full w-full sm:w-auto"
               >
                 Join Stusil Today <ArrowRight className="h-5 w-5" />
@@ -356,7 +356,7 @@ export default function Landing() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate("/get-started")}
+              onClick={() => navigate("/join")}
               className="glow-button flex items-center justify-center gap-2 px-8 py-4 text-base !rounded-full mx-auto"
             >
               Get Started for Free <ArrowRight className="h-5 w-5" />

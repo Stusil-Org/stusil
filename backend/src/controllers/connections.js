@@ -1,4 +1,5 @@
 const prisma = require('../services/db');
+const { createNotification } = require('./notifications');
 
 const sendRequest = async (req, res) => {
   try {
@@ -152,8 +153,20 @@ const updateRequest = async (req, res) => {
     if (action === 'accept') {
       const updated = await prisma.connection.update({
         where: { id },
-        data: { status: "accepted" }
+        data: { status: "accepted" },
+        include: { receiver: true }
       });
+      
+      const io = req.app.get('io');
+      if (io) {
+        await createNotification(io, updated.sender_id, {
+          type: "accepted",
+          title: "Connection Accepted",
+          body: `${updated.receiver.full_name} accepted your connection request`,
+          link: `/u/${updated.receiver.username}`
+        });
+      }
+
       return res.status(200).json(updated);
     } else if (action === 'reject') {
       await prisma.connection.delete({ where: { id } });

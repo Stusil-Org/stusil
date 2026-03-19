@@ -160,7 +160,7 @@ export default function Connections() {
 
   const tabs = [
     { key: "connections" as const, label: "My Connections", count: connections.length, icon: Users },
-    { key: "pending" as const, label: "Pending", count: pendingRequests.length, icon: User },
+    { key: "pending" as const, label: "Pending", count: pendingRequests.length + pendingRequestsSent.length, icon: User },
     { key: "discover" as const, label: "Discover People", count: null, icon: UserPlus },
   ];
 
@@ -304,60 +304,119 @@ export default function Connections() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                {pendingRequests.length === 0 ? (
+                {pendingRequests.length === 0 && pendingRequestsSent.length === 0 ? (
                   <div className="glass-card p-12 border border-border/50 text-center">
                     <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">No pending requests</h3>
                     <p className="text-sm text-muted-foreground">
-                      When someone sends you a connection request, it will appear here.
+                      When someone sends you a connection request, or you send one, it will appear here.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {pendingRequests.map((req, i) => (
-                      <motion.div
-                        key={req.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="glass-card p-4 flex items-center justify-between border border-border/50 hover:border-primary/20 transition-all"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`h-12 w-12 rounded-full bg-gradient-to-br ${
-                              colors[i % colors.length]
-                            } flex items-center justify-center text-sm font-bold text-white`}
+                  <div className="space-y-8">
+                    {/* Received Requests */}
+                    {pendingRequests.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-bold text-foreground mb-4">Received Requests</h3>
+                        {pendingRequests.map((req, i) => (
+                          <motion.div
+                            key={req.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="glass-card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border border-border/50 hover:border-primary/20 transition-all"
                           >
-                            {req.sender.full_name.substring(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-foreground">
-                              {req.sender.full_name}
+                            <div className="flex items-center gap-4">
+                              <div
+                                className={`h-12 w-12 rounded-full bg-gradient-to-br ${
+                                  colors[i % colors.length]
+                                } flex items-center justify-center text-sm font-bold text-white shrink-0`}
+                                onClick={() => navigate(`/u/${req.sender.username}`)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {req.sender.profile_image ? (
+                                  <img src={req.sender.profile_image} className="w-full h-full rounded-full object-cover" />
+                                ) : (
+                                  req.sender.full_name?.substring(0, 2).toUpperCase()
+                                )}
+                              </div>
+                              <div className="cursor-pointer" onClick={() => navigate(`/u/${req.sender.username}`)}>
+                                <div className="text-sm font-bold text-foreground">
+                                  {req.sender.full_name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">@{req.sender.username}</div>
+                                {req.sender.field_of_study && (
+                                  <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                    {req.sender.field_of_study}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">@{req.sender.username}</div>
-                            {req.sender.field_of_study && (
-                              <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                {req.sender.field_of_study}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleAction(req.id, "accept")}
-                            className="flex items-center gap-1.5 rounded-xl bg-emerald-500/15 text-emerald-500 px-4 py-2 text-xs font-medium hover:bg-emerald-500/25 transition-colors"
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <button
+                                onClick={() => handleAction(req.id, "accept")}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/15 text-emerald-500 px-4 py-2 text-xs font-medium hover:bg-emerald-500/25 transition-colors"
+                              >
+                                <Check className="h-3.5 w-3.5" /> Accept
+                              </button>
+                              <button
+                                onClick={() => handleAction(req.id, "reject")}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-destructive/15 text-destructive px-4 py-2 text-xs font-medium hover:bg-destructive/25 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5" /> Decline
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Sent Requests */}
+                    {pendingRequestsSent.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-bold text-foreground mb-4">Sent Requests</h3>
+                        {pendingRequestsSent.map((req, i) => (
+                          <motion.div
+                            key={req.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="glass-card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border border-border/50 hover:border-primary/20 transition-all opacity-70 hover:opacity-100"
                           >
-                            <Check className="h-3.5 w-3.5" /> Accept
-                          </button>
-                          <button
-                            onClick={() => handleAction(req.id, "reject")}
-                            className="flex items-center gap-1.5 rounded-xl bg-destructive/15 text-destructive px-4 py-2 text-xs font-medium hover:bg-destructive/25 transition-colors"
-                          >
-                            <X className="h-3.5 w-3.5" /> Decline
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))}
+                            <div className="flex items-center gap-4">
+                              <div
+                                className={`h-12 w-12 rounded-full bg-gradient-to-br ${
+                                  colors[(i + 2) % colors.length]
+                                } flex items-center justify-center text-sm font-bold text-white shrink-0`}
+                                onClick={() => navigate(`/u/${req.receiver.username}`)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {req.receiver.profile_image ? (
+                                  <img src={req.receiver.profile_image} className="w-full h-full rounded-full object-cover" />
+                                ) : (
+                                  req.receiver.full_name?.substring(0, 2).toUpperCase()
+                                )}
+                              </div>
+                              <div className="cursor-pointer" onClick={() => navigate(`/u/${req.receiver.username}`)}>
+                                <div className="text-sm font-bold text-foreground">
+                                  {req.receiver.full_name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">@{req.receiver.username}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <span className="text-xs font-medium text-amber-500 px-2">Pending</span>
+                              <button
+                                onClick={() => handleRemoveConnection(req.id)}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-xs font-medium hover:bg-destructive/20 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5" /> Withdraw
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>

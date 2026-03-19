@@ -5,6 +5,8 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getApiData } from "@/lib/api";
+import { io } from "socket.io-client";
+import { toast } from "sonner";
 
 const mobileNavItems = [
   { label: "Dashboard", path: "/dashboard" },
@@ -23,7 +25,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem("sidebar_collapsed");
     return saved === "true";
   });
-  const [user, setUser] = useState<{ full_name: string; username: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; full_name: string; username: string; email: string } | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,6 +48,35 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     };
     fetchUser();
   }, []);
+
+  // Global socket listener for toasts
+  useEffect(() => {
+    if (!user) return;
+    
+    // We use the full API URL for socket connection if it exists, otherwise it defaults to the same host
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const socket = io(apiUrl, { transports: ["websocket", "polling"] });
+    
+    socket.on("connect", () => {
+      socket.emit("join_personal", user.id);
+    });
+    
+    socket.on("new_notification", (notif: any) => {
+      toast(notif.title, {
+        description: notif.body,
+        duration: 8000,
+        position: "bottom-right",
+        action: notif.link ? {
+          label: "View",
+          onClick: () => navigate(notif.link),
+        } : undefined,
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
