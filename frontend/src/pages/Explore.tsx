@@ -124,15 +124,15 @@ export default function Explore() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.1, type: "spring", damping: 25 }}
               viewport={{ once: true }}
-              className="glass-card-hover flex items-center justify-between p-5"
+              className="glass-card-hover flex flex-col sm:flex-row sm:items-center sm:justify-between p-5 gap-4"
             >
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">{s.title}</h3>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-foreground truncate">{s.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">by {s.author}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="rounded-lg bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{s.seeking}</span>
-                <Link to="/join" className="glow-button-outline px-3 py-1.5 text-xs">Apply</Link>
+              <div className="flex items-center gap-3 justify-between sm:justify-end">
+                <span className="rounded-lg bg-primary/10 px-3 py-1 text-[10px] font-medium text-primary whitespace-nowrap">{s.seeking}</span>
+                <Link to="/join" className="glow-button-outline px-3 py-1.5 text-xs whitespace-nowrap">Apply</Link>
               </div>
             </motion.div>
           ))}

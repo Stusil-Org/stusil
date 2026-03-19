@@ -47,12 +47,12 @@ export default function Leaderboard() {
         <motion.div 
            initial={{ opacity: 0, y: 20 }} 
            animate={{ opacity: 1, y: 0 }}
-           className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-primary/20 via-background to-purple-500/10 border border-primary/20 p-12 text-center mb-16 shadow-2xl"
+           className="relative overflow-hidden rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-primary/20 via-background to-purple-500/10 border border-primary/20 p-6 md:p-12 lg:p-16 text-center mb-10 md:mb-16 shadow-2xl"
         >
            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-none" />
-           <Trophy className="h-16 w-16 text-primary mx-auto mb-6 animate-bounce-subtle" />
-           <h1 className="text-4xl lg:text-6xl font-black text-foreground tracking-tighter mb-4">The Hall of Fame</h1>
-           <p className="text-muted-foreground max-w-xl mx-auto text-lg leading-relaxed font-medium">
+           <Trophy className="h-12 w-12 md:h-16 md:w-16 text-primary mx-auto mb-4 md:mb-6 animate-bounce-subtle" />
+           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tighter mb-4">The Hall of Fame</h1>
+           <p className="text-muted-foreground max-w-xl mx-auto text-sm md:text-lg leading-relaxed font-medium">
              Honoring the most relentless builders, visionary founders, and impactful student innovators in the ecosystem.
            </p>
         </motion.div>
