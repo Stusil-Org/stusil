@@ -52,6 +52,8 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -116,6 +118,28 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const res = await apiFetch("/api/v1/users/profile-photo", {
+          method: "PUT",
+          body: JSON.stringify({ profile_image: reader.result }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser({ ...user, profile_image: data.profile_image });
+          alert("Profile photo updated!");
+        }
+      } catch (err) { console.error(err); alert("Error uploading photo."); }
+      finally { setUploading(false); }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLogout = () => {
@@ -228,7 +252,42 @@ export default function SettingsPage() {
                            <section.icon className="h-5 w-5" />
                         </div>
                      </div>
-                     <div className="p-8 space-y-6">
+                     <div className="p-8 space-y-8">
+                        {section.id === "profile" && (
+                          <div className="flex flex-col items-center justify-center pb-8 border-b border-border/30 mb-8">
+                            <div className="relative group/avatar">
+                              <div className="h-32 w-32 rounded-[2.5rem] overflow-hidden border-4 border-background shadow-2xl relative">
+                                {user.profile_image ? (
+                                  <img src={user.profile_image} className="h-full w-full object-cover" />
+                                ) : (
+                                  <div className="h-full w-full bg-primary/10 flex items-center justify-center text-4xl font-black text-primary uppercase">
+                                    {(user.full_name || user.username || "??").substring(0, 2)}
+                                  </div>
+                                )}
+                                {uploading && (
+                                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  </div>
+                                )}
+                              </div>
+                              <button 
+                                onClick={() => (document.getElementById("profile-upload") as HTMLInputElement)?.click()}
+                                className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-primary text-white shadow-xl flex items-center justify-center hover:scale-110 transition-all z-10"
+                              >
+                                <Palette className="h-4 w-4" />
+                              </button>
+                              <input 
+                                id="profile-upload"
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*" 
+                                onChange={handleImageUpload}
+                              />
+                            </div>
+                            <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biometric Avatar Identity</p>
+                          </div>
+                        )}
+
                         {section.fields.map((field) => (
                           <div key={field.label} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center group/field">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover/field:text-primary transition-colors">

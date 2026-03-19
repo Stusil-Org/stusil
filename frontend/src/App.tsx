@@ -18,6 +18,7 @@ import PublicPortfolio from "./pages/PublicPortfolio";
 import About from "./pages/About";
 import Explore from "./pages/Explore";
 import Connections from "./pages/Connections";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import GetStarted from "./pages/GetStarted";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

@@ -14,7 +14,8 @@ import {
   Shield,
   Sun,
   Moon,
-  UserPlus
+  UserPlus,
+  Trophy
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CommandBarTrigger } from "./CommandBar";
@@ -27,6 +28,7 @@ const navItems = [
   { icon: FolderOpen, label: "Portfolio", path: "/portfolio" },
   { icon: MessageCircle, label: "Messages", path: "/messages" },
   { icon: UserPlus, label: "Connections", path: "/connections" },
+  { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 

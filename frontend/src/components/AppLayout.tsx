@@ -14,6 +14,7 @@ const mobileNavItems = [
   { label: "Community", path: "/community" },
   { label: "Connections", path: "/connections" },
   { label: "Startups", path: "/startups" },
+  { label: "Leaderboard", path: "/leaderboard" },
   { label: "Portfolio", path: "/portfolio" },
   { label: "Messages", path: "/messages" },
   { label: "Settings", path: "/settings" },

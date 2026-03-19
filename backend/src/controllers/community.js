@@ -55,3 +55,49 @@ exports.getTrending = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch trending data' });
   }
 };
+
+exports.getLeaderboard = async (req, res) => {
+  try {
+    // Top Students: Based on number of projects (stars total if we had that, otherwise just counts for now)
+    // Using simple prisma strategy: Sort by stars (as a proxy for skill_level or activity)
+    const topStudents = await prisma.user.findMany({
+      take: 10,
+      select: {
+        id: true,
+        full_name: true,
+        username: true,
+        profile_image: true,
+        field_of_study: true,
+        country: true,
+        _count: {
+          select: { projects: true, startups: true }
+        }
+      },
+      orderBy: { 
+        created_at: 'asc' // Placeholder, usually would use points
+      }
+    });
+
+    // Top Projects: Most stars overall
+    const topProjects = await prisma.project.findMany({
+      where: { visibility: 'public' },
+      take: 5,
+      orderBy: { stars: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        stars: true,
+        field: true,
+        owner: { select: { full_name: true } }
+      }
+    });
+
+    res.json({
+      topStudents,
+      topProjects
+    });
+  } catch (err) {
+    console.error("Leaderboard fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+};

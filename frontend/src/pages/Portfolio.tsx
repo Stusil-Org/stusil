@@ -307,8 +307,9 @@ export default function Portfolio() {
                    { icon: Github, link: profile.links.github, color: "hover:text-[#2ea44f]" },
                    { icon: Linkedin, link: profile.links.linkedin, color: "hover:text-[#0a66c2]" },
                    { icon: Globe, link: profile.links.website, color: "hover:text-primary" }
-                 ].map((item, i) => (
-                   <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className={`glass-card flex h-14 w-14 items-center justify-center rounded-3xl border-border/50 transition-all hover:scale-110 hover:-translate-y-1 ${item.color}`}>
+                 ].filter(item => item.link && item.link !== "#" && item.link.length > 0)
+                 .map((item, i) => (
+                   <a key={i} href={item.link.startsWith("http") ? item.link : `https://${item.link}`} target="_blank" rel="noopener noreferrer" className={`glass-card flex h-14 w-14 items-center justify-center rounded-3xl border-border/50 transition-all hover:scale-110 hover:-translate-y-1 ${item.color}`}>
                      <item.icon className="h-6 w-6" />
                    </a>
                  ))
