@@ -603,9 +603,13 @@ export default function Projects() {
                         </h3>
                         <div className="flex flex-wrap gap-3">
                           {(selected.members || []).map((m) => (
-                            <div key={m.id} className="group/mem flex items-center gap-3 rounded-2xl border border-border/50 bg-secondary/20 p-2 pr-4 transition-all hover:bg-secondary/40">
+                            <div 
+                              key={m.id} 
+                              className="group/mem flex items-center gap-3 rounded-2xl border border-border/50 bg-secondary/20 p-2 pr-4 transition-all hover:bg-secondary/40 cursor-pointer"
+                              onClick={() => navigate(`/u/${m.user.username}`)}
+                            >
                               <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 shrink-0">
-                                {m.user.full_name.substring(0, 1).toUpperCase()}
+                                {m.user.full_name?.substring(0, 1).toUpperCase() || "?"}
                               </div>
                               <div className="min-w-0">
                                 <p className="text-[11px] font-black text-foreground truncate">{m.user.full_name}</p>

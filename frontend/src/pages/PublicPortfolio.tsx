@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
+import { getApiData } from "@/lib/api";
 
 interface UserProfile {
   name: string;
@@ -45,13 +46,9 @@ export default function PublicPortfolio() {
       if (!username) return;
 
       try {
-        const token = localStorage.getItem("token");
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
-        const portRes = await fetch(`/api/v1/portfolio/${username}`, { headers });
-        if (portRes.ok) {
-          const { user, portfolio, projects } = await portRes.json();
+        const data = await getApiData(`/api/v1/portfolio/${username}`);
+        if (data) {
+          const { user, portfolio, projects } = data;
 
           let parsedSkills = ["React", "TypeScript"];
           if (portfolio && portfolio.skills) {

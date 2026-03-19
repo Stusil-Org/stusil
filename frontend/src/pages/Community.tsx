@@ -100,9 +100,12 @@ export default function Community() {
                         <div className="p-6">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-2 block">{p.field}</span>
                           <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-amber-400 transition-colors line-clamp-1">{p.title}</h3>
-                          <div className="flex items-center gap-2 mt-4">
+                          <div 
+                            className="flex items-center gap-2 mt-4 hover:opacity-80 transition-opacity cursor-pointer inline-flex"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/u/${p.owner.username}`); }}
+                          >
                              <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                               {p.owner.full_name.substring(0, 1)}
+                               {p.owner.full_name?.substring(0, 1) || "?"}
                              </div>
                              <span className="text-xs text-muted-foreground font-medium">by {p.owner.full_name}</span>
                           </div>

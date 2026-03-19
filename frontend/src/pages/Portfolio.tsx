@@ -181,9 +181,8 @@ export default function Portfolio() {
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
-        const res = await fetch("/api/v1/users/profile-photo", {
+        const res = await apiFetch("/api/v1/users/profile-photo", {
           method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ profile_image: reader.result }),
         });
         if (res.ok) await fetchPortfolio();
