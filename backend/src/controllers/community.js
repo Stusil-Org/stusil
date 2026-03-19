@@ -18,7 +18,7 @@ exports.getTrending = async (req, res) => {
         banner_image: true,
         views: true,
         stars: true,
-        owner: { select: { full_name: true, username: true } }
+        owner: { select: { full_name: true, username: true, profile_image: true } }
       }
     });
 
@@ -88,7 +88,7 @@ exports.getLeaderboard = async (req, res) => {
         title: true,
         stars: true,
         field: true,
-        owner: { select: { full_name: true } }
+        owner: { select: { full_name: true, profile_image: true } }
       }
     });
 

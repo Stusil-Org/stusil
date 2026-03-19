@@ -19,8 +19,8 @@ exports.sendMessage = async (req, res) => {
         file_url
       },
       include: {
-        sender: { select: { id: true, full_name: true, username: true } },
-        receiver: { select: { id: true, full_name: true, username: true } }
+        sender: { select: { id: true, full_name: true, username: true, profile_image: true } },
+        receiver: { select: { id: true, full_name: true, username: true, profile_image: true } }
       }
     });
 
@@ -45,7 +45,7 @@ exports.getMessages = async (req, res) => {
       },
       orderBy: { created_at: 'asc' },
       include: {
-        sender: { select: { id: true, full_name: true, username: true } }
+        sender: { select: { id: true, full_name: true, username: true, profile_image: true } }
       }
     });
 
@@ -69,8 +69,8 @@ exports.getConversations = async (req, res) => {
       },
       orderBy: { created_at: 'desc' },
       include: {
-        sender: { select: { id: true, full_name: true, email: true, username: true } },
-        receiver: { select: { id: true, full_name: true, email: true, username: true } }
+        sender: { select: { id: true, full_name: true, email: true, username: true, profile_image: true } },
+        receiver: { select: { id: true, full_name: true, email: true, username: true, profile_image: true } }
       }
     });
 
@@ -112,17 +112,17 @@ exports.getMyProjects = async (req, res) => {
         ]
       },
       include: {
-        owner: { select: { id: true, full_name: true, username: true } },
+        owner: { select: { id: true, full_name: true, username: true, profile_image: true } },
         members: {
           include: {
-            user: { select: { id: true, full_name: true, username: true } }
+            user: { select: { id: true, full_name: true, username: true, profile_image: true } }
           }
         },
         project_messages: {
           orderBy: { created_at: 'desc' },
           take: 1,
           include: {
-            sender: { select: { id: true, full_name: true, username: true } }
+            sender: { select: { id: true, full_name: true, username: true, profile_image: true } }
           }
         }
       }
@@ -176,7 +176,7 @@ exports.getProjectMessages = async (req, res) => {
       where: { project_id: projectId },
       orderBy: { created_at: 'asc' },
       include: {
-        sender: { select: { id: true, full_name: true, username: true } }
+        sender: { select: { id: true, full_name: true, username: true, profile_image: true } }
       }
     });
 
@@ -221,7 +221,7 @@ exports.sendProjectMessage = async (req, res) => {
         message_text
       },
       include: {
-        sender: { select: { id: true, full_name: true, username: true } }
+        sender: { select: { id: true, full_name: true, username: true, profile_image: true } }
       }
     });
 

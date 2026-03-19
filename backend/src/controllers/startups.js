@@ -33,7 +33,7 @@ exports.createStartup = async (req, res) => {
     const full = await prisma.startupIdea.findUnique({
       where: { id: startup.id },
       include: {
-        creator: { select: { id: true, username: true, full_name: true } },
+        creator: { select: { id: true, username: true, full_name: true, profile_image: true } },
         roles: true
       }
     });
@@ -49,7 +49,7 @@ exports.getStartups = async (req, res) => {
   try {
     const startups = await prisma.startupIdea.findMany({
       include: {
-        creator: { select: { id: true, username: true, full_name: true } },
+        creator: { select: { id: true, username: true, full_name: true, profile_image: true } },
         roles: {
           include: {
             applications: {
@@ -74,7 +74,7 @@ exports.getStartupById = async (req, res) => {
     const startup = await prisma.startupIdea.findUnique({
       where: { id: req.params.id },
       include: {
-        creator: { select: { id: true, username: true, full_name: true, bio: true } },
+        creator: { select: { id: true, username: true, full_name: true, bio: true, profile_image: true } },
         roles: {
           include: {
             applications: {
@@ -194,7 +194,7 @@ exports.applyForRole = async (req, res) => {
         answers: answers ? JSON.stringify(answers) : null,
       },
       include: {
-        user: { select: { id: true, username: true, full_name: true } }
+        user: { select: { id: true, username: true, full_name: true, profile_image: true } }
       }
     });
 

@@ -45,9 +45,9 @@ exports.createProject = async (req, res) => {
     const fullProject = await prisma.project.findUnique({
       where: { id: project.id },
       include: {
-        owner: { select: { id: true, username: true, full_name: true } },
+        owner: { select: { id: true, username: true, full_name: true, profile_image: true } },
         roles: true,
-        members: { include: { user: { select: { id: true, username: true, full_name: true } } } },
+        members: { include: { user: { select: { id: true, username: true, full_name: true, profile_image: true } } } },
       }
     });
 
@@ -68,8 +68,8 @@ exports.getProjects = async (req, res) => {
     const projects = await prisma.project.findMany({
       where,
       include: {
-        owner: { select: { id: true, username: true, full_name: true } },
-        members: { include: { user: { select: { id: true, username: true, full_name: true } } } },
+        owner: { select: { id: true, username: true, full_name: true, profile_image: true } },
+        members: { include: { user: { select: { id: true, username: true, full_name: true, profile_image: true } } } },
         roles: {
           include: {
             applications: {
@@ -93,8 +93,8 @@ exports.getProjectById = async (req, res) => {
     const project = await prisma.project.findUnique({
       where: { id: req.params.id },
       include: {
-        owner: { select: { id: true, username: true, full_name: true } },
-        members: { include: { user: { select: { id: true, username: true, full_name: true } } } },
+        owner: { select: { id: true, username: true, full_name: true, profile_image: true } },
+        members: { include: { user: { select: { id: true, username: true, full_name: true, profile_image: true } } } },
         files: true,
         roles: {
           include: {
