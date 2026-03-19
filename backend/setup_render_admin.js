@@ -19,17 +19,28 @@ async function main() {
   const user = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {
-      role: 'Admin',
-      password: hashedPassword,
+      role: 'admin',
+      password_hash: hashedPassword,
     },
     create: {
       email: adminEmail,
       username: 'stusil_admin',
-      name: 'Stusil Admin',
-      password: hashedPassword,
-      role: 'Admin',
+      full_name: 'Tanisha ',
+      password_hash: hashedPassword,
+      role: 'admin',
       bio: 'System Administrator',
     },
+  });
+
+  // Ensure portfolio exists
+  await prisma.portfolio.upsert({
+    where: { user_id: user.id },
+    update: {},
+    create: {
+      user_id: user.id,
+      bio: 'System Administrator',
+      skills: JSON.stringify(['Security', 'Management', 'Automation']),
+    }
   });
 
   console.log('✅ Admin User Ready!');

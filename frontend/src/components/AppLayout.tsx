@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FloatingSidebar } from "./FloatingSidebar";
 import { CommandBar } from "./CommandBar";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getApiData } from "@/lib/api";
@@ -34,6 +34,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const newVal = !collapsed;
     setCollapsed(newVal);
     localStorage.setItem("sidebar_collapsed", String(newVal));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    toast.success("Logged out successfully");
+    navigate("/login");
   };
 
   useEffect(() => {
@@ -90,7 +97,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block transition-all duration-300">
-        <FloatingSidebar collapsed={collapsed} onToggle={handleToggleCollapse} user={user} />
+        <FloatingSidebar collapsed={collapsed} onToggle={handleToggleCollapse} onLogout={handleLogout} user={user} />
       </div>
 
       {/* Mobile Header */}
@@ -139,6 +146,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   Admin
                 </button>
               )}
+              <div className="my-2 h-px bg-border/30" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="h-4 w-4" /> Logout
+              </button>
             </nav>
           </motion.div>
         )}

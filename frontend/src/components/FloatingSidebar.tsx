@@ -15,7 +15,8 @@ import {
   Sun,
   Moon,
   UserPlus,
-  Trophy
+  Trophy,
+  LogOut
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CommandBarTrigger } from "./CommandBar";
@@ -39,10 +40,12 @@ const adminItems = [
 export function FloatingSidebar({ 
   collapsed, 
   onToggle, 
+  onLogout,
   user 
 }: { 
   collapsed: boolean; 
   onToggle: () => void;
+  onLogout: () => void;
   user: { full_name: string; username: string; email: string } | null;
 }) {
   const [isDark, setIsDark] = useState(() => !document.documentElement.classList.contains("light"));
@@ -148,19 +151,26 @@ export function FloatingSidebar({
       </div>
 
       {/* User */}
-      {!collapsed && (
-        <div className="border-t border-border/30 px-3 py-3">
-          <div className="flex items-center gap-3 rounded-xl p-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary uppercase">
-              {user?.full_name ? user.full_name.substring(0, 2) : user?.username ? user.username.substring(0, 2) : "AJ"}
-            </div>
-            <div className="min-w-0">
+      <div className="border-t border-border/30 px-3 py-3">
+        <div className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-secondary/30 relative group/user">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary uppercase flex-shrink-0">
+            {user?.full_name ? user.full_name.substring(0, 2) : user?.username ? user.username.substring(0, 2) : "AJ"}
+          </div>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-foreground">{user?.full_name || user?.username || "Loading..."}</p>
               <p className="truncate text-[10px] text-muted-foreground">{user?.email || "..."}</p>
             </div>
-          </div>
+          )}
+          <button
+            onClick={onLogout}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all ${collapsed ? 'absolute -right-2 top-0 bg-card shadow-lg opacity-0 group-hover/user:opacity-100' : ''}`}
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="border-t border-border/30 px-3 py-3">
         <button
