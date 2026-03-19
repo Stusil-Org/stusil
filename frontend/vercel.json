@@ -1,6 +1,14 @@
 {
     "rewrites": [
         {
+            "source": "/api/:path*",
+            "destination": "https://stusil.onrender.com/api/:path*"
+        },
+        {
+            "source": "/socket.io/:path*",
+            "destination": "https://stusil.onrender.com/socket.io/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/"
         }

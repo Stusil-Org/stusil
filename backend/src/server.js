@@ -30,7 +30,10 @@ const io = new Server(server, {
 // Attach io to app so controllers can access it via req.app.get('io')
 app.set('io', io);
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://stusil.vercel.app', 'http://localhost:8080', 'http://localhost:5000'],
+  credentials: true,
+}));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 

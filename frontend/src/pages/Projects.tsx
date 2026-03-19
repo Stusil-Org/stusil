@@ -246,13 +246,19 @@ export default function Projects() {
         setApplyingRole(null);
         setApplyAnswers([]);
         // Refresh selected
-        const pRes = await fetch(`/api/v1/projects/${selected.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        if (pRes.ok) setSelected(await pRes.json());
+        try {
+          const data = await getApiData(`/api/v1/projects/${selected.id}`);
+          setSelected(data);
+        } catch { /* ignore refresh error */ }
       } else {
-        const err = await res.json();
-        alert(err.error || "Failed to apply.");
+        const text = await res.text();
+        try {
+          const parsed = JSON.parse(text);
+          alert(parsed.error || "Failed to apply.");
+        } catch {
+          console.error("Non-JSON response:", text.substring(0, 200));
+          alert("Server error. Please try again.");
+        }
       }
     } catch (err) { console.error(err); alert("Error applying."); }
   };
@@ -266,10 +272,10 @@ export default function Projects() {
       });
       if (res.ok) {
         await fetchProjects();
-        const pRes = await fetch(`/api/v1/projects/${selected.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        if (pRes.ok) setSelected(await pRes.json());
+        try {
+          const data = await getApiData(`/api/v1/projects/${selected.id}`);
+          setSelected(data);
+        } catch { /* ignore refresh error */ }
       }
     } catch (err) { console.error(err); }
   };
