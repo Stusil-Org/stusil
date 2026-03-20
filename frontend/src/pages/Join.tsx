@@ -30,8 +30,11 @@ export default function Join() {
         password: form.password,
         username: form.email.split('@')[0] + Math.floor(Math.random() * 1000),
         full_name: form.name,
+        university: storedAnswers.university || "University Student",
+        country: storedAnswers.country || "Earth",
+        dob: storedAnswers.dob || "2000-01-01",
         field_of_study: storedAnswers.field || "Not Specified",
-        bio: `Role: ${storedAnswers.role || "Student"} | Goal: ${storedAnswers.goal || "Build projects"} | Skill Level: ${storedAnswers.skill || "Beginner"} | Open to Collab: ${storedAnswers.collab || "Yes"}`,
+        bio: `Role: ${storedAnswers.role || "Student"} | Goal: ${storedAnswers.goal || "Build projects"} | Skill Level: ${storedAnswers.skill || "Beginner"} | Lab: ${storedAnswers.lab || "Core"}`,
       };
 
       // Corrected production path for v1 auth

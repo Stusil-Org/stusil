@@ -20,6 +20,7 @@ model User {
   bio            String?
   links          String?          // JSON string for social links (github, linkedin, website)
   country        String?          // User's country
+  dob            String?          // Date of Birth
   role           String           @default("user")
   is_verified    Boolean          @default(false)
   verify_token   String?

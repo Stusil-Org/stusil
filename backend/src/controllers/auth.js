@@ -6,7 +6,7 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/e
 
 exports.signup = async (req, res) => {
   try {
-    const { email, password, username, full_name, university, field_of_study, skill_level, bio, profile_image } = req.body;
+    const { email, password, username, full_name, university, country, dob, field_of_study, skill_level, bio, profile_image } = req.body;
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,7 +37,9 @@ exports.signup = async (req, res) => {
         username,
         password_hash,
         full_name,
-        university,
+        university: university || "Nexus Academy",
+        country: country || "Earth",
+        dob: dob || "2000-01-01",
         field_of_study,
         skill_level,
         bio,

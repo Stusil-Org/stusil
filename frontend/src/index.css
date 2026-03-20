@@ -7,50 +7,50 @@
 @layer base {
   /* Dark theme (default) */
   :root {
-    --background: 240 10% 3.9%;
+    --background: 240 10% 2%;
     --foreground: 0 0% 98%;
 
-    --card: 240 6% 6%;
+    --card: 240 6% 4%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 6% 6%;
+    --popover: 240 6% 4%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 239 84% 67%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 12%;
+    --secondary: 240 5% 8%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 55%;
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 239 84% 67%;
+    --accent: 221 83% 53%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 239 84% 67%;
+    --border: 240 4% 12%;
+    --input: 240 4% 12%;
+    --ring: 221 83% 53%;
 
     --radius: 1rem;
 
     /* Custom tokens */
-    --glow-primary: 239 84% 67%;
-    --glow-secondary: 280 80% 60%;
-    --surface-glass: 240 6% 10%;
-    --surface-elevated: 240 6% 8%;
+    --glow-primary: 221 83% 53%;
+    --glow-secondary: 160 84% 45%;
+    --surface-glass: 240 6% 6%;
+    --surface-elevated: 240 6% 5%;
 
-    --sidebar-background: 240 10% 3.9%;
+    --sidebar-background: 240 10% 2%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 12%;
+    --sidebar-accent: 240 5% 8%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-border: 240 4% 12%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   /* Light theme */
@@ -138,8 +138,8 @@
   }
 
   .glow-button {
-    @apply relative overflow-hidden rounded-xl px-6 py-3 font-medium transition-all duration-300;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--glow-secondary)));
+    @apply relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-all duration-300;
+    background: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
   }
 
@@ -147,7 +147,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--glow-secondary)));
+    background: hsl(var(--primary));
     opacity: 0;
     transition: opacity 0.3s;
     filter: blur(20px);
@@ -160,8 +160,7 @@
   }
 
   .glow-button:hover {
-    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.6),
-                0 0 80px -20px hsl(var(--glow-secondary) / 0.4);
+    box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.5);
     transform: translateY(-1px);
   }
 
@@ -190,10 +189,7 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--glow-secondary)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: hsl(var(--primary));
   }
 
   .heading-tight {
