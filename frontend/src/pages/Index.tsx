@@ -75,6 +75,9 @@ const Index = () => {
     const fetchAll = async () => {
       try {
         const userData = await getApiData("/api/v1/auth/me");
+        if (userData && userData.email === 'stusil.org@gmail.com') {
+          return navigate("/admin");
+        }
         setUser(userData);
 
         const pData = await getApiData("/api/v1/projects");

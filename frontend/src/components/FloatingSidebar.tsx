@@ -33,8 +33,11 @@ const navItems = [
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
-const adminItems = [
-  { icon: Shield, label: "Admin", path: "/admin" },
+const adminNavItems = [
+  { icon: LayoutDashboard, label: "Admin Panel", path: "/admin" },
+  { icon: Users, label: "Manage Users", path: "/admin" },
+  { icon: FolderOpen, label: "Moderation", path: "/admin" },
+  { icon: Settings, label: "Global Settings", path: "/settings" },
 ];
 
 export function FloatingSidebar({ 
@@ -102,11 +105,11 @@ export function FloatingSidebar({
       )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {navItems.map((item) => {
+        {(user?.email === 'stusil.org@gmail.com' ? adminNavItems : navItems).map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <button
-              key={item.path}
+              key={item.label}
               onClick={() => navigate(item.path)}
               className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
@@ -116,27 +119,6 @@ export function FloatingSidebar({
             </button>
           );
         })}
-
-        {/* Admin - only for admin email */}
-        {user?.email === 'stusil.org@gmail.com' && (
-          <>
-            <div className="my-3 h-px bg-border/30" />
-            {adminItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    }`}
-                >
-                  <item.icon className={`h-4 w-4 flex-shrink-0 ${isActive ? "text-primary" : ""}`} />
-                  {!collapsed && <span>{item.label}</span>}
-                </button>
-              );
-            })}
-          </>
-        )}
       </nav>
 
       {/* Theme toggle */}

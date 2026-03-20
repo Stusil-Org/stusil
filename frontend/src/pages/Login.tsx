@@ -23,7 +23,11 @@ export default function Login() {
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("token", data.token);
-        navigate("/dashboard");
+        if (data.user?.email === 'stusil.org@gmail.com') {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         alert(data.error || "Login failed");
       }

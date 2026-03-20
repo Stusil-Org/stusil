@@ -162,11 +162,14 @@ export default function Projects() {
     const fetchUser = async () => {
       try {
         const data = await getApiData("/api/v1/auth/me");
+        if (data && data.email === 'stusil.org@gmail.com') {
+          return navigate("/admin");
+        }
         setUser(data);
       } catch (err) { console.error(err); }
     };
     fetchUser();
-  }, []);
+  }, [navigate]);
 
   const fetchProjects = async () => {
     setLoading(true);

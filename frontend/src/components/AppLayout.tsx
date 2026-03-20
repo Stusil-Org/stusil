@@ -20,6 +20,13 @@ const mobileNavItems = [
   { label: "Settings", path: "/settings" },
 ];
 
+const adminMobileNavItems = [
+  { label: "Admin Panel", path: "/admin" },
+  { label: "Users", path: "/admin" },
+  { label: "Moderation", path: "/admin" },
+  { label: "Settings", path: "/settings" },
+];
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
@@ -50,12 +57,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       try {
         const data = await getApiData("/api/v1/auth/me");
         setUser(data);
+        
+        // Global redirect for Admin email to stay in Admin sections
+        const adminPaths = ["/admin", "/settings", "/messages", "/logout"];
+        if (data && data.email === 'stusil.org@gmail.com' && !adminPaths.some(p => location.pathname.startsWith(p))) {
+           navigate("/admin");
+        }
       } catch (err) {
         console.error("Error fetching user in layout:", err);
       }
     };
     fetchUser();
-  }, []);
+  }, [location.pathname, navigate]);
 
   // Global socket listener for toasts
   useEffect(() => {
@@ -121,9 +134,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             className="fixed inset-x-0 top-14 z-30 border-b border-border/30 bg-card/95 backdrop-blur-xl lg:hidden"
           >
             <nav className="space-y-1 p-3">
-              {mobileNavItems.map((item) => (
+              {(user?.email === 'stusil.org@gmail.com' ? adminMobileNavItems : mobileNavItems).map((item) => (
                 <button
-                  key={item.path}
+                  key={item.label}
                   onClick={() => { navigate(item.path); setMobileOpen(false); }}
                   className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
                     location.pathname === item.path
@@ -134,18 +147,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {item.label}
                 </button>
               ))}
-              {user?.email === 'stusil.org@gmail.com' && (
-                <button
-                  onClick={() => { navigate("/admin"); setMobileOpen(false); }}
-                  className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
-                    location.pathname === "/admin"
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Admin
-                </button>
-              )}
               <div className="my-2 h-px bg-border/30" />
               <button
                 onClick={handleLogout}

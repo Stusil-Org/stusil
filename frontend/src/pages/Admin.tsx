@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
   Users, FolderOpen, Rocket, Shield,
-  Eye, Ban, Search, Trash2, ChartBar, X
+  Eye, Ban, Search, Trash2, ChartBar, X, Sparkles
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
@@ -126,55 +126,57 @@ export default function Admin() {
   const pendingReports = reports.filter(r => r.status === 'pending');
 
   const stats = [
-    { label: "Total Users", value: users.length, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "All Projects", value: projects.length, icon: FolderOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { label: "Startup Ideas", value: startups.length, icon: Rocket, color: "text-purple-500", bg: "bg-purple-500/10" },
-    { label: "Pending Reports", value: pendingReports.length, icon: Ban, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { label: "Total Pioneers", value: users.length, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Active Projects", value: projects.length, icon: FolderOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "Startup Ventures", value: startups.length, icon: Rocket, color: "text-purple-500", bg: "bg-purple-500/10" },
+    { label: "Active Reports", value: pendingReports.length, icon: Ban, color: "text-rose-500", bg: "bg-rose-500/10" },
   ];
 
   if (!isAdmin) return <AppLayout><div className="flex h-screen items-center justify-center p-8 text-muted-foreground animate-pulse">Verifying access...</div></AppLayout>;
 
   return (
     <AppLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10">
-            <Shield className="h-6 w-6 text-destructive" />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="pb-10">
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[2rem] bg-destructive/10 border border-destructive/20 shadow-2xl shadow-destructive/5">
+              <Shield className="h-8 w-8 text-destructive" />
+            </div>
+            <div>
+              <h1 className="heading-tight text-4xl font-black text-foreground tracking-tighter">Command Center</h1>
+              <p className="text-sm font-medium text-muted-foreground mt-1">Platform-wide oversight and moderation system.</p>
+            </div>
           </div>
-          <div>
-            <h1 className="heading-tight text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Manage users, flag content, and moderate projects.</p>
+          
+          <div className="flex items-center gap-2 rounded-2xl bg-secondary/20 p-1.5 border border-border/30 overflow-x-auto">
+            {(["overview", "users", "projects", "startups", "reports"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setTab(t as any); setSearch(""); }}
+                className={`rounded-xl px-5 py-2 text-xs font-bold uppercase tracking-widest transition-all shrink-0 ${
+                  tab === t ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="mb-6 flex items-center gap-1 auto-cols-auto rounded-xl bg-secondary/30 p-1 w-fit flex-wrap">
-          {(["overview", "users", "projects", "startups", "reports"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t as any); setSearch(""); }}
-              className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-all ${
-                tab === t ? "bg-primary/20 text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
         </div>
 
         {tab === "overview" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((stat, i) => (
-                <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                  <GlassCard className="glass-card-hover border-border/50">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
-                        <p className="heading-tight mt-2 text-4xl font-black text-foreground">{stat.value}</p>
-                      </div>
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${stat.bg}`}>
+                <motion.div key={stat.label} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
+                  <GlassCard className="glass-card-hover border-border/50 relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 h-20 w-20 bg-primary/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-start justify-between relative z-10">
+                       <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${stat.bg} border border-border/30`}>
                         <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">{stat.label}</p>
+                        <p className="heading-tight text-4xl font-black text-foreground">{stat.value}</p>
                       </div>
                     </div>
                   </GlassCard>
@@ -182,13 +184,43 @@ export default function Admin() {
               ))}
             </div>
             
-            <GlassCard>
-              <div className="flex flex-col items-center justify-center p-8 text-center opacity-50">
-                <ChartBar className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-bold text-foreground">System Health</h3>
-                <p className="text-sm text-muted-foreground mt-2 max-w-sm">All moderation systems running smoothly. Switch to the other tabs to monitor active content.</p>
-              </div>
-            </GlassCard>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <GlassCard className="lg:col-span-2">
+                 <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-lg font-bold">Platform Pulse</h3>
+                    <div className="flex items-center gap-2">
+                       <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Live Monitoring</span>
+                    </div>
+                 </div>
+                 <div className="h-[250px] flex items-center justify-center p-8 text-center border-2 border-dashed border-border/20 rounded-3xl opacity-40">
+                    <div className="flex flex-col items-center gap-4">
+                       <ChartBar className="h-10 w-10 text-muted-foreground" />
+                       <p className="text-sm font-medium">Growth analytics will appear as more pioneers join the platform.</p>
+                    </div>
+                 </div>
+              </GlassCard>
+
+              <GlassCard>
+                 <h3 className="text-lg font-bold mb-6">Security Context</h3>
+                 <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
+                       <Ban className="h-5 w-5 text-amber-500 shrink-0 mt-1" />
+                       <div>
+                          <p className="text-xs font-bold text-foreground">Anti-Spam Active</p>
+                          <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">System is automatically flagging suspicious login frequency.</p>
+                       </div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
+                       <Shield className="h-5 w-5 text-emerald-500 shrink-0 mt-1" />
+                       <div>
+                          <p className="text-xs font-bold text-foreground">Core Encryption</p>
+                          <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">PostgreSQL database communication is currently encrypted via SSL.</p>
+                       </div>
+                    </div>
+                 </div>
+              </GlassCard>
+            </div>
           </div>
         )}
 
@@ -204,11 +236,11 @@ export default function Admin() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/30 bg-secondary/20">
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">User</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">Role</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">Projects</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">Joined</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-widest text-muted-foreground">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">Pioneer Identity</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">Access Level</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">Ventures</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-widest text-muted-foreground">First Contact</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-widest text-muted-foreground">Control</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -220,7 +252,10 @@ export default function Admin() {
                               {u.name?.substring(0,2).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium text-foreground">{u.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-medium text-foreground">{u.name}</p>
+                                {u.is_verified && <Sparkles className="h-3 w-3 text-primary" />}
+                              </div>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
                             </div>
                           </div>
