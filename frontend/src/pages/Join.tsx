@@ -72,10 +72,10 @@ export default function Join() {
         >
           {/* Logo */}
           <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/20">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/5 overflow-hidden border border-border/30">
+              <img src="/favicon.ico" alt="Stusil Logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">STUSIL</span>
+            <span className="text-xl font-bold tracking-tight text-foreground uppercase tracking-widest">STUSIL</span>
           </div>
 
           <div className="glass-card p-8 border-transparent lg:border-border/50 bg-transparent lg:bg-secondary/10">

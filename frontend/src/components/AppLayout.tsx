@@ -115,7 +115,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header */}
       <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between border-b border-border/30 bg-background/80 px-4 py-3 backdrop-blur-xl lg:hidden">
-        <span className="text-sm font-bold tracking-tight text-foreground">STUSIL</span>
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/5 overflow-hidden">
+             <img src="/favicon.ico" alt="Logo" className="h-4 w-4 object-contain" />
+          </div>
+          <span className="text-sm font-bold tracking-tight text-foreground uppercase tracking-widest">STUSIL</span>
+        </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary"

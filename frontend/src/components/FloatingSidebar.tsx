@@ -88,8 +88,8 @@ export function FloatingSidebar({
         }`}
     >
       <div className="flex items-center gap-3 border-b border-border/30 px-4 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
-          <Sparkles className="h-4 w-4 text-primary" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/5 flex-shrink-0 overflow-hidden">
+          <img src="/favicon.ico" alt="Stusil Logo" className="h-5 w-5 object-contain" />
         </div>
         {!collapsed && (
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm font-bold tracking-tight text-foreground">

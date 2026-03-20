@@ -89,10 +89,10 @@ export default function Landing() {
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:px-12 backdrop-blur-xl bg-background/60 border-b border-border/30">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-glow-secondary">
-            <Zap className="h-4 w-4 text-white" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/5 overflow-hidden border border-border/30">
+            <img src="/favicon.ico" alt="Stusil Logo" className="h-6 w-6 object-contain" />
           </div>
-          <span className="text-xl font-bold tracking-tight">STUSIL</span>
+          <span className="text-xl font-bold tracking-tight uppercase tracking-widest text-foreground">STUSIL</span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={toggleTheme} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
