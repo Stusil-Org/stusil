@@ -7,10 +7,12 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { getApiData, apiFetch } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/modals/ConfirmationModal";
 import { ShareModal } from "@/components/modals/ShareModal";
+import { ShieldAlert } from "lucide-react";
 
 function timeAgo(dateStr: string) {
   const d = new Date(dateStr);
@@ -99,6 +101,9 @@ export default function Startups() {
   const [memberToRemove, setMemberToRemove] = useState<{startupId: string, memberId: string} | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [startupToShare, setStartupToShare] = useState<{title: string, id: string} | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportingStartup, setReportingStartup] = useState<any>(null);
 
   const navigate = useNavigate();
 
@@ -208,13 +213,22 @@ export default function Startups() {
         body: JSON.stringify({ answers: applyAnswers }),
       });
       if (res.ok) {
+        toast.success("Application submitted!");
         await fetchStartups();
         setApplyingRole(null);
         setApplyAnswers([]);
         const data = await getApiData(`/api/v1/startups/${selected.id}`);
         if (data) setSelected(data);
+      } else {
+        const text = await res.text();
+        try {
+          const parsed = JSON.parse(text);
+          toast.error(parsed.error || "Failed to apply.");
+        } catch {
+          toast.error("Server error. Please try again.");
+        }
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); toast.error("Error applying."); }
   };
 
   const handleAppAction = async (applicationId: string, action: "accept" | "reject") => {
@@ -225,11 +239,14 @@ export default function Startups() {
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
+        toast.success(`Application ${action === "accept" ? "accepted" : "rejected"}`);
         await fetchStartups();
         const data = await getApiData(`/api/v1/startups/${selected.id}`);
         if (data) setSelected(data);
+      } else {
+        toast.error("Failed to process application.");
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); toast.error("Error processing application."); }
   };
 
   const handleDelete = async (id: string) => {
@@ -237,9 +254,10 @@ export default function Startups() {
       await apiFetch(`/api/v1/startups/${id}`, {
         method: "DELETE",
       });
+      toast.success("Startup Venture dissolved");
       await fetchStartups();
       setSelected(null);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); toast.error("Error deleting venture."); }
   };
 
   const handleRemoveMember = async (startupId: string, memberId: string) => {
@@ -248,12 +266,33 @@ export default function Startups() {
         method: "DELETE",
       });
       if (res.ok) {
+        toast.success("Member removed");
         await fetchStartups();
         const data = await getApiData(`/api/v1/startups/${startupId}`);
         if (data) setSelected(data);
+      } else {
+        toast.error("Failed to remove member.");
       }
     } catch (err) {
       console.error(err);
+      toast.error("Error removing member.");
+    }
+  };
+
+  const handleReport = async () => {
+    if (!reportReason || !reportingStartup) return;
+    try {
+       await apiFetch("/api/v1/reports/create", {
+         method: "POST",
+         body: JSON.stringify({ type: "startup", target_id: reportingStartup.id, target_name: reportingStartup.title, reason: reportReason })
+       });
+       toast.success("Startup reported for review.");
+       setShowReportModal(false);
+       setReportReason("");
+       setReportingStartup(null);
+       setSelected(null);
+    } catch (err) {
+       toast.error("Failed to report.");
     }
   };
 
@@ -521,15 +560,9 @@ export default function Startups() {
                       <button onClick={() => navigate(`/messages?user=${selected.creator?.id}`)} className="glow-button-outline flex items-center gap-2 text-sm">
                         <MessageCircle className="h-4 w-4" /> Message Founder
                       </button>
-                      <button onClick={async () => {
-                        const reason = window.prompt("Why are you reporting this?");
-                        if (!reason) return;
-                        await fetch("/api/v1/reports/create", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
-                          body: JSON.stringify({ type: "startup", target_id: selected.id, target_name: selected.title, reason })
-                        });
-                        alert("Reported."); setSelected(null);
+                      <button onClick={() => {
+                        setReportingStartup(selected);
+                        setShowReportModal(true);
                       }} className="glow-button-outline flex items-center gap-2 text-sm border-destructive/30 text-destructive hover:bg-destructive/10 ml-auto">
                         Report
                       </button>
@@ -743,6 +776,42 @@ export default function Startups() {
         title={startupToShare?.title || "Startup Idea"}
         link={`${window.location.origin}/startups?id=${startupToShare?.id}`}
       />
+
+      <AnimatePresence>
+        {showReportModal && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md" onClick={() => setShowReportModal(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-[110] flex items-center justify-center px-4 pointer-events-none"
+            >
+              <div className="glass-card border border-border/50 p-6 shadow-2xl w-full max-w-sm pointer-events-auto rounded-[2rem]">
+                 <div className="flex flex-col items-center text-center">
+                    <div className="h-16 w-16 rounded-2xl flex items-center justify-center mb-4 bg-amber-500/10 text-amber-500">
+                      <ShieldAlert className="h-8 w-8" />
+                    </div>
+                    <h2 className="heading-tight text-xl font-bold text-foreground mb-2">Report Anomaly</h2>
+                    <p className="text-sm text-muted-foreground mb-6">Explain why this idea should be reviewed by moderation.</p>
+                    
+                    <textarea 
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      placeholder="Suspected spam, inappropriate content, etc."
+                      className="w-full rounded-2xl bg-secondary/30 border border-border/50 p-4 text-xs text-foreground outline-none focus:border-primary/50 mb-6 resize-none h-24"
+                    />
+
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      <button onClick={() => setShowReportModal(false)} className="py-3.5 rounded-2xl border border-border/50 bg-secondary/30 text-xs font-black uppercase tracking-widest text-foreground hover:bg-secondary transition-all">Cancel</button>
+                      <button onClick={handleReport} disabled={!reportReason} className="glow-button !text-xs !py-3 font-black uppercase tracking-widest disabled:opacity-30">Transmit Report</button>
+                    </div>
+                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }

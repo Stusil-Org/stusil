@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Plus, Search, Users, Clock, X, Sparkles, Briefcase, ChevronDown,
   Check, UserPlus, Trash2, Eye, MessageCircle, Code, Palette, Server,
-  Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe, ArrowUpRight, Pencil,
+  Layers, Send, FileText, Share2, Link, Image as ImageIcon, Globe, ArrowUpRight, Pencil, ShieldAlert
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { getApiData, apiFetch } from "@/lib/api";
@@ -110,6 +111,9 @@ export default function Projects() {
   const [memberToRemove, setMemberToRemove] = useState<{projectId: string, memberId: string} | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [projectToShare, setProjectToShare] = useState<{title: string, id: string} | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportingProject, setReportingProject] = useState<any>(null);
 
   const navigate = useNavigate();
 
@@ -248,6 +252,7 @@ export default function Projects() {
         await fetchProjects();
         setApplyingRole(null);
         setApplyAnswers([]);
+        toast.success("Application submitted successfully!");
         // Refresh selected
         try {
           const data = await getApiData(`/api/v1/projects/${selected.id}`);
@@ -257,13 +262,13 @@ export default function Projects() {
         const text = await res.text();
         try {
           const parsed = JSON.parse(text);
-          alert(parsed.error || "Failed to apply.");
+          toast.error(parsed.error || "Failed to apply.");
         } catch {
           console.error("Non-JSON response:", text.substring(0, 200));
-          alert("Server error. Please try again.");
+          toast.error("Server error. Please try again.");
         }
       }
-    } catch (err) { console.error(err); alert("Error applying."); }
+    } catch (err) { console.error(err); toast.error("Error applying."); }
   };
 
   const handleAppAction = async (applicationId: string, action: "accept" | "reject") => {
@@ -303,9 +308,27 @@ export default function Projects() {
       await apiFetch(`/api/v1/projects/${projectId}`, {
         method: "DELETE"
       });
+      toast.success("Project Dissolved");
       await fetchProjects();
       setSelected(null);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); toast.error("Error dissolving project."); }
+  };
+
+  const handleReport = async () => {
+    if (!reportReason || !reportingProject) return;
+    try {
+       await apiFetch("/api/v1/reports/create", {
+         method: "POST",
+         body: JSON.stringify({ type: "project", target_id: reportingProject.id, target_name: reportingProject.title, reason: reportReason })
+       });
+       toast.success("Project reported.");
+       setShowReportModal(false);
+       setReportReason("");
+       setReportingProject(null);
+       setSelected(null);
+    } catch (err) {
+       toast.error("Failed to report project.");
+    }
   };
 
   const isOwner = selected && user && selected.owner_id === user.id;
@@ -704,15 +727,9 @@ export default function Projects() {
                              <button className="w-full py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
                                 Message Owner
                              </button>
-                             <button onClick={async () => {
-                                const reason = window.prompt("Why are you reporting this project?");
-                                if (!reason) return;
-                                await apiFetch("/api/v1/reports/create", {
-                                  method: "POST",
-                                  body: JSON.stringify({ type: "project", target_id: selected.id, target_name: selected.title, reason })
-                                });
-                                alert("Project reported.");
-                                setSelected(null);
+                             <button onClick={() => {
+                                setReportingProject(selected);
+                                setShowReportModal(true);
                              }} className="w-full py-3 rounded-2xl border border-border/50 text-muted-foreground text-[10px] font-black uppercase tracking-widest hover:bg-secondary/30 transition-all">
                                 Report Anomaly
                              </button>
@@ -1116,6 +1133,42 @@ export default function Projects() {
         title={projectToShare?.title || "Project"}
         link={`${window.location.origin}${window.location.pathname}?project=${projectToShare?.id}`}
       />
+
+      <AnimatePresence>
+        {showReportModal && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md" onClick={() => setShowReportModal(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-[110] flex items-center justify-center px-4 pointer-events-none"
+            >
+              <div className="glass-card border border-border/50 p-6 shadow-2xl w-full max-w-sm pointer-events-auto rounded-[2rem]">
+                 <div className="flex flex-col items-center text-center">
+                    <div className="h-16 w-16 rounded-2xl flex items-center justify-center mb-4 bg-amber-500/10 text-amber-500">
+                      <ShieldAlert className="h-8 w-8" />
+                    </div>
+                    <h2 className="heading-tight text-xl font-bold text-foreground mb-2">Report Anomaly</h2>
+                    <p className="text-sm text-muted-foreground mb-6">Explain why this project should be reviewed.</p>
+                    
+                    <textarea 
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      placeholder="Suspected spam, inappropriate content, etc."
+                      className="w-full rounded-2xl bg-secondary/30 border border-border/50 p-4 text-xs text-foreground outline-none focus:border-primary/50 mb-6 resize-none h-24"
+                    />
+
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      <button onClick={() => setShowReportModal(false)} className="py-3.5 rounded-2xl border border-border/50 bg-secondary/30 text-xs font-black uppercase tracking-widest text-foreground hover:bg-secondary transition-all">Cancel</button>
+                      <button onClick={handleReport} disabled={!reportReason} className="glow-button !text-xs !py-3 font-black uppercase tracking-widest disabled:opacity-30">Transmit Report</button>
+                    </div>
+                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,11 +29,12 @@ export default function Login() {
         } else {
           navigate("/dashboard");
         }
+        toast.success("Welcome back!");
       } else {
-        alert(data.error || "Login failed");
+        toast.error(data.error || "Login failed");
       }
     } catch (err) {
-      alert("Error connecting to server");
+      toast.error("Error connecting to server");
     } finally {
       setLoading(false);
     }

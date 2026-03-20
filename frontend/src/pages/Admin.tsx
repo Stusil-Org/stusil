@@ -8,6 +8,8 @@ import { GlassCard } from "@/components/GlassCard";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getApiData, apiFetch } from "@/lib/api";
+import { toast } from "sonner";
+import { ConfirmationModal } from "@/components/modals/ConfirmationModal";
 
 export default function Admin() {
   const [tab, setTab] = useState<"overview" | "users" | "projects" | "startups">("overview");
@@ -18,6 +20,14 @@ export default function Admin() {
   const [reports, setReports] = useState<any[]>([]);
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  // New states for confirmation modals
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteContext, setDeleteContext] = useState<{ type: string; id: string } | null>(null);
+  const [showResolveConfirm, setShowResolveConfirm] = useState(false);
+  const [resolveContext, setResolveContext] = useState<{ id: string; action: 'dismiss' | 'remove_target' } | null>(null);
+  const [showMemberRemoveConfirm, setShowMemberRemoveConfirm] = useState(false);
+  const [memberContext, setMemberContext] = useState<{ type: "project" | "startup"; parentId: string; memberId: string } | null>(null);
 
   // Check admin access
   useEffect(() => {
@@ -62,49 +72,53 @@ export default function Admin() {
   };
 
   const handleDelete = async (type: string, id: string) => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`)) return;
-
     try {
       const res = await apiFetch(`/api/v1/admin/${type}s/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
+        toast.success(`Successfully deleted ${type}`);
         fetchData();
       } else {
-        alert(`Failed to delete ${type}`);
+        toast.error(`Failed to delete ${type}`);
       }
     } catch (err) {
       console.error(`Error deleting ${type}:`, err);
+      toast.error("An error occurred during deletion");
     }
   };
 
   const handleResolveReport = async (id: string, action: 'dismiss' | 'remove_target') => {
-    if (action === 'remove_target' && !window.confirm("Are you sure you want to delete the reported content across the platform?")) return;
     try {
       const res = await apiFetch(`/api/v1/admin/reports/${id}/resolve`, {
         method: 'PUT',
         body: JSON.stringify({ action })
       });
-      if (res.ok) fetchData();
+      if (res.ok) {
+        toast.success("Report resolved");
+        fetchData();
+      }
     } catch (err) {
       console.error("Error resolving report", err);
+      toast.error("Failed to resolve report");
     }
   };
 
   const handleRemoveMember = async (type: "project" | "startup", parentId: string, memberId: string) => {
-    if (!window.confirm("Are you sure you want to remove this member from the group?")) return;
     try {
       const res = await apiFetch(`/api/v1/admin/${type}s/${parentId}/members/${memberId}`, {
         method: "DELETE",
       });
       if (res.ok) {
+        toast.success("Member removed from group");
         fetchData();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to remove member");
+        toast.error(data.error || "Failed to remove member");
       }
     } catch (err) {
       console.error("Error removing member", err);
+      toast.error("Network error removing member");
     }
   };
 
@@ -270,7 +284,7 @@ export default function Admin() {
                         <td className="px-4 py-3 text-muted-foreground">{u.projectsCount || 0}</td>
                         <td className="px-4 py-3 text-muted-foreground">{u.joined}</td>
                         <td className="px-4 py-3 text-right">
-                          <button onClick={() => handleDelete('user', u.id)} disabled={u.role === "Admin"} className="rounded-lg p-2 text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-30 disabled:hover:bg-transparent">
+                          <button onClick={() => { setDeleteContext({ type: 'user', id: u.id }); setShowDeleteConfirm(true); }} disabled={u.role === "Admin"} className="rounded-lg p-2 text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-30 disabled:hover:bg-transparent">
                             <Ban className="h-4 w-4" />
                           </button>
                         </td>
@@ -308,7 +322,7 @@ export default function Admin() {
                         <p className="text-xs text-muted-foreground mt-0.5">By {p.owner?.full_name || p.owner?.username} · {new Date(p.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <button onClick={() => handleDelete('project', p.id)} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors w-fit">
+                    <button onClick={() => { setDeleteContext({ type: 'project', id: p.id }); setShowDeleteConfirm(true); }} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors w-fit">
                       <Trash2 className="h-4 w-4" /> Delete Project
                     </button>
                   </div>
@@ -329,7 +343,7 @@ export default function Admin() {
                             </div>
                             {m.user_id !== p.owner_id && (
                               <button 
-                                onClick={() => handleRemoveMember('project', p.id, m.id)}
+                                onClick={() => { setMemberContext({ type: 'project', parentId: p.id, memberId: m.id }); setShowMemberRemoveConfirm(true); }}
                                 className="ml-1 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 title="Remove member"
                               >
@@ -370,7 +384,7 @@ export default function Admin() {
                         <p className="text-xs text-muted-foreground mt-0.5">By {s.creator?.full_name || s.creator?.username} · {new Date(s.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <button onClick={() => handleDelete('startup', s.id)} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors w-fit">
+                    <button onClick={() => { setDeleteContext({ type: 'startup', id: s.id }); setShowDeleteConfirm(true); }} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors w-fit">
                       <Trash2 className="h-4 w-4" /> Delete Idea
                     </button>
                   </div>
@@ -390,7 +404,7 @@ export default function Admin() {
                               <span className="text-[8px] text-muted-foreground mt-0.5">{m.role}</span>
                             </div>
                             <button 
-                              onClick={() => handleRemoveMember('startup', s.id, m.id)}
+                              onClick={() => { setMemberContext({ type: 'startup', parentId: s.id, memberId: m.id }); setShowMemberRemoveConfirm(true); }}
                               className="ml-1 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                               title="Remove member"
                             >
@@ -430,7 +444,7 @@ export default function Admin() {
                     <button onClick={() => handleResolveReport(r.id, 'dismiss')} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-foreground bg-secondary/80 hover:bg-secondary transition-colors">
                       Dismiss Report
                     </button>
-                    <button onClick={() => handleResolveReport(r.id, 'remove_target')} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors">
+                    <button onClick={() => { setResolveContext({ id: r.id, action: 'remove_target' }); setShowResolveConfirm(true); }} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors">
                       <Trash2 className="h-4 w-4" /> Remove Content
                     </button>
                   </div>
@@ -442,6 +456,37 @@ export default function Admin() {
             </div>
           </div>
         )}
+
+        {/* Branded Confirmation Modals */}
+        <ConfirmationModal 
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => deleteContext && handleDelete(deleteContext.type, deleteContext.id)}
+          title={`Secure Delete`}
+          message={`Are you sure you want to permanently delete this ${deleteContext?.type}? This action cannot be reversed.`}
+          confirmText="Delete permanently"
+          variant="danger"
+        />
+
+        <ConfirmationModal 
+          isOpen={showResolveConfirm}
+          onClose={() => setShowResolveConfirm(false)}
+          onConfirm={() => resolveContext && handleResolveReport(resolveContext.id, resolveContext.action)}
+          title={`Resolve Report`}
+          message={`This will permanently remove the reported content from the platform. Continue?`}
+          confirmText="Remove Content"
+          variant="danger"
+        />
+
+        <ConfirmationModal 
+          isOpen={showMemberRemoveConfirm}
+          onClose={() => setShowMemberRemoveConfirm(false)}
+          onConfirm={() => memberContext && handleRemoveMember(memberContext.type, memberContext.parentId, memberContext.memberId)}
+          title={`Revoke Access`}
+          message={`Remove this pioneer from the group?`}
+          confirmText="Revoke Access"
+          variant="warning"
+        />
       </motion.div>
     </AppLayout>
   );

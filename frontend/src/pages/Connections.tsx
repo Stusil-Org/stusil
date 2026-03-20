@@ -4,6 +4,8 @@ import { Check, X, User, Search, MessageCircle, UserMinus, UserPlus, Users, Exte
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getApiData } from "@/lib/api";
+import { toast } from "sonner";
+import { ConfirmationModal } from "@/components/modals/ConfirmationModal";
 
 interface PendingRequest {
   id: string;
@@ -51,6 +53,8 @@ export default function Connections() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"connections" | "pending" | "discover">("connections");
   const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [removeContext, setRemoveContext] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const fetchConnectionsData = async () => {
@@ -89,31 +93,32 @@ export default function Connections() {
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
+        toast.success(action === "accept" ? "Connection accepted!" : "Request declined");
         fetchConnectionsData();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to process request.");
+        toast.error(err.error || "Failed to process request.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error processing request.");
+      toast.error("Error processing request.");
     }
   };
 
   const handleRemoveConnection = async (connectionId: string) => {
-    if (!window.confirm("Remove this connection?")) return;
     try {
       const res = await apiFetch(`/api/v1/connections/${connectionId}`, {
         method: "DELETE"
       });
       if (res.ok) {
+        toast.success("Connection removed");
         fetchConnectionsData();
       } else {
-        alert("Failed to remove connection.");
+        toast.error("Failed to remove connection.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error removing connection.");
+      toast.error("Error removing connection.");
     }
   };
 
@@ -126,13 +131,14 @@ export default function Connections() {
       });
       const data = await res.json();
       if (res.ok) {
+        toast.success("Connection request sent!");
         fetchConnectionsData();
       } else {
-        alert(data.error || "Failed to send request.");
+        toast.error(data.error || "Failed to send request.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error sending request.");
+      toast.error("Error sending request.");
     } finally {
       setConnectingId(null);
     }
@@ -283,7 +289,7 @@ export default function Connections() {
                             <ExternalLink className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => user.connectionId && handleRemoveConnection(user.connectionId)}
+                            onClick={() => { setRemoveContext(user.connectionId || null); setShowRemoveConfirm(true); }}
                             className="flex items-center justify-center rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-xs font-medium hover:bg-destructive/20 transition-colors"
                           >
                             <UserMinus className="h-3.5 w-3.5" />
@@ -498,6 +504,16 @@ export default function Connections() {
             )}
           </AnimatePresence>
         )}
+
+        <ConfirmationModal 
+          isOpen={showRemoveConfirm}
+          onClose={() => setShowRemoveConfirm(false)}
+          onConfirm={() => removeContext && handleRemoveConnection(removeContext)}
+          title="Remove Connection"
+          message="Are you sure you want to remove this connection? You will need to send another request to connect again."
+          confirmText="Yes, remove"
+          variant="danger"
+        />
       </motion.div>
     </AppLayout>
   );

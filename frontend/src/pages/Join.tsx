@@ -5,6 +5,7 @@ import {
   Mail, Lock, User, ArrowRight, ArrowLeft, Sparkles, Check,
   Code, Briefcase, FlaskConical, Palette, BookOpen, Rocket, Users, Target,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Join() {
   const [form, setForm] = useState({
@@ -41,12 +42,13 @@ export default function Join() {
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("token", data.token);
+        toast.success("Welcome to Stusil!");
         navigate("/dashboard");
       } else {
-        alert(data.error || "Signup failed");
+        toast.error(data.error || "Signup failed");
       }
     } catch (err) {
-      alert("Error connecting to server");
+      toast.error("Error connecting to server");
     } finally {
       setLoading(false);
     }

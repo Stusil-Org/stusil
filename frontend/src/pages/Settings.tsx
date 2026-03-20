@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { User, Bell, Shield, Palette, LogOut, Globe, Lock, Link as LinkIcon, Briefcase, Settings, Save } from "lucide-react";
+import { User, Bell, Shield, Palette, LogOut, Globe, Lock, Link as LinkIcon, Briefcase, Settings, Save, Camera } from "lucide-react";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 
@@ -108,13 +109,13 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        alert("Settings saved successfully!");
+        toast.success("Settings saved successfully!");
       } else {
-        alert("Failed to save settings.");
+        toast.error("Failed to save settings.");
       }
     } catch (err) {
       console.error("Error saving profile", err);
-      alert("Error saving profile.");
+      toast.error("Error saving profile.");
     } finally {
       setSaving(false);
     }
@@ -134,9 +135,9 @@ export default function SettingsPage() {
         if (res.ok) {
           const data = await res.json();
           setUser({ ...user, profile_image: data.profile_image });
-          alert("Profile photo updated!");
+          toast.success("Profile photo updated!");
         }
-      } catch (err) { console.error(err); alert("Error uploading photo."); }
+      } catch (err) { console.error(err); toast.error("Error uploading photo."); }
       finally { setUploading(false); }
     };
     reader.readAsDataURL(file);
