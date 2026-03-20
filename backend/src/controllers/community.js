@@ -40,6 +40,22 @@ exports.getTrending = async (req, res) => {
       }
     });
 
+    // Top 3 Students for mini-leaderboard
+    const topStudentsData = await prisma.user.findMany({
+      take: 20,
+      select: {
+        id: true,
+        full_name: true,
+        username: true,
+        profile_image: true,
+        _count: { select: { projects: true, startups: true } }
+      }
+    });
+
+    const topStudents = topStudentsData
+      .sort((a, b) => (b._count.projects + b._count.startups) - (a._count.projects + a._count.startups))
+      .slice(0, 3);
+
     res.json({
       trendingProjects,
       hotIdeas: hotIdeas.map(idea => ({
@@ -48,6 +64,10 @@ exports.getTrending = async (req, res) => {
         field: idea.field,
         joinRequests: idea._count.applications,
         creator: idea.creator
+      })),
+      topStudents: topStudents.map(s => ({
+        ...s,
+        xp: (s._count.projects + s._count.startups) * 10
       }))
     });
   } catch (error) {
@@ -58,10 +78,9 @@ exports.getTrending = async (req, res) => {
 
 exports.getLeaderboard = async (req, res) => {
   try {
-    // Top Students: Based on number of projects (stars total if we had that, otherwise just counts for now)
-    // Using simple prisma strategy: Sort by stars (as a proxy for skill_level or activity)
-    const topStudents = await prisma.user.findMany({
-      take: 10,
+    // Fetch top 50 users then sort by total contributions (projects + startups)
+    const users = await prisma.user.findMany({
+      take: 50,
       select: {
         id: true,
         full_name: true,
@@ -72,17 +91,26 @@ exports.getLeaderboard = async (req, res) => {
         _count: {
           select: { projects: true, startups: true }
         }
-      },
-      orderBy: { 
-        created_at: 'asc' // Placeholder, usually would use points
       }
     });
+
+    // Sort by calculated XP proxy: (projects * 2 + startups * 3) (or just sum)
+    const topStudents = users
+      .sort((a, b) => {
+        const scoreA = (a._count.projects + a._count.startups);
+        const scoreB = (b._count.projects + b._count.startups);
+        return scoreB - scoreA;
+      })
+      .slice(0, 10);
 
     // Top Projects: Most stars overall
     const topProjects = await prisma.project.findMany({
       where: { visibility: 'public' },
       take: 5,
-      orderBy: { stars: 'desc' },
+      orderBy: [
+        { stars: 'desc' },
+        { created_at: 'desc' }
+      ],
       select: {
         id: true,
         title: true,

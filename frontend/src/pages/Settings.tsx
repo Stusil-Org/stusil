@@ -176,106 +176,137 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-6xl relative z-10 px-4">
+      <div className="mx-auto max-w-6xl relative z-10 px-4 pb-20">
         {/* Header Section */}
-        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
               <div className="flex items-center gap-3 mb-2">
-                 <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Settings className="h-4 w-4 text-primary" />
+                 <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+                    <Settings className="h-5 w-5 text-primary" />
                  </div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Config</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Architecture</span>
               </div>
               <h1 className="heading-tight text-4xl font-black text-foreground tracking-tight lg:text-5xl">Preferences</h1>
-              <p className="mt-2 text-sm font-medium text-muted-foreground max-w-md">Calibrate your identity, security, and external nodes in the ecosystem.</p>
+              <p className="mt-2 text-sm font-medium text-muted-foreground max-w-md">Configure your identity, security protocols, and external ecosystem nodes.</p>
            </motion.div>
            
-           <div className="flex items-center gap-4">
+           <div className="flex items-center gap-3 self-end md:self-center">
+              <button 
+                onClick={handleLogout} 
+                className="h-11 px-4 rounded-2xl border border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/10 flex items-center justify-center transition-all group gap-2"
+              >
+                <LogOut className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                <span className="text-xs font-bold uppercase tracking-wider">De-sync</span>
+              </button>
               <button 
                 onClick={handleSave} 
                 disabled={saving} 
-                className="glow-button flex items-center justify-center gap-2 group !bg-primary hover:!bg-primary/90 border-none shadow-xl shadow-primary/20 min-w-[140px]"
+                className="glow-button flex items-center justify-center gap-2 group !bg-primary hover:!bg-primary/90 border-none shadow-xl shadow-primary/20 h-11 px-6 min-w-[160px]"
               >
-                {saving ? "Syncing..." : (
+                {saving ? (
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    <span className="font-bold">Save System</span>
+                    <span className="font-bold">Sync Changes</span>
                   </>
                 )}
-              </button>
-              <button 
-                onClick={handleLogout} 
-                className="h-[46px] w-[46px] rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-all group"
-              >
-                <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
            </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-           {/* Sidebar Navigation */}
-           <div className="lg:col-span-1 space-y-2">
-              {sectionsBase.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                  className="flex w-full items-center gap-4 rounded-[1.25rem] border border-transparent p-4 text-left transition-all hover:bg-secondary/30 group"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                    <section.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-foreground">{section.title}</p>
-                    <p className="text-[9px] font-bold text-muted-foreground line-clamp-1">{section.description}</p>
-                  </div>
-                </button>
-              ))}
+        {/* Mobile Section Tabs (Horizontal Scroll) */}
+        <div className="lg:hidden sticky top-0 z-30 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-xl border-b border-border/30 mb-8 overflow-x-auto no-scrollbar flex items-center gap-2">
+            {sectionsBase.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-secondary/20 hover:bg-primary/10 transition-all"
+              >
+                <section.icon className="h-4 w-4 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{section.title}</span>
+              </button>
+            ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+           {/* Desktop Sidebar Navigation (Sticky) */}
+           <div className="hidden lg:block lg:col-span-3">
+              <div className="sticky top-24 space-y-1">
+                {sectionsBase.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                    className="flex w-full items-center gap-4 rounded-2xl border border-transparent p-4 text-left transition-all hover:bg-secondary/40 group hover:border-border/30"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary/50 text-muted-foreground group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
+                      <section.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-foreground group-hover:text-primary transition-colors">{section.title}</p>
+                      <p className="text-[9px] font-bold text-muted-foreground line-clamp-1">{section.description}</p>
+                    </div>
+                  </button>
+                ))}
+                
+                <div className="mt-10 p-6 rounded-3xl bg-primary/5 border border-primary/10">
+                   <Shield className="h-6 w-6 text-primary mb-3" />
+                   <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-1">Security Status</h4>
+                   <p className="text-[10px] text-muted-foreground leading-relaxed">Your account is protected by industry standard encryption protocols.</p>
+                </div>
+              </div>
            </div>
 
            {/* Main Content Areas */}
-           <div className="lg:col-span-3 space-y-10">
+           <div className="lg:col-span-9 space-y-12">
               {sectionsBase.map((section, si) => (
                 <motion.div
                   key={section.id}
                   id={section.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                 >
-                  <GlassCard className="rounded-[2.5rem] border-border/50 p-0 overflow-hidden relative group">
-                     <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-primary/50 to-transparent" />
-                     <div className="p-8 border-b border-border/30 bg-secondary/10 flex items-center justify-between">
-                        <div>
-                           <h2 className="text-xl font-black text-foreground tracking-tight">{section.title}</h2>
-                           <p className="text-xs font-medium text-muted-foreground mt-1">{section.description}</p>
-                        </div>
-                        <div className="h-10 w-10 rounded-2xl bg-background flex items-center justify-center text-primary shadow-sm">
-                           <section.icon className="h-5 w-5" />
+                  <GlassCard className="rounded-[3rem] border-border/50 p-0 overflow-hidden relative group shadow-2xl shadow-black/5 hover:border-primary/20 transition-all duration-500">
+                     <div className="p-10 border-b border-border/30 bg-secondary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                           <div className="h-12 w-12 rounded-2xl bg-background flex items-center justify-center text-primary shadow-sm border border-border/50">
+                              <section.icon className="h-6 w-6" />
+                           </div>
+                           <div>
+                              <h2 className="text-2xl font-black text-foreground tracking-tight">{section.title}</h2>
+                              <p className="text-xs font-medium text-muted-foreground mt-0.5">{section.description}</p>
+                           </div>
                         </div>
                      </div>
-                     <div className="p-8 space-y-8">
+                     
+                     <div className="p-10 space-y-10">
                         {section.id === "profile" && (
-                          <div className="flex flex-col items-center justify-center pb-8 border-b border-border/30 mb-8">
+                          <div className="flex flex-col sm:flex-row items-center gap-8 pb-10 border-b border-border/20">
                             <div className="relative group/avatar">
-                              <div className="h-32 w-32 rounded-[2.5rem] overflow-hidden border-4 border-background shadow-2xl relative">
+                              <div className="h-36 w-36 rounded-[2.5rem] overflow-hidden border-4 border-background shadow-2xl relative bg-secondary/30">
                                 {user.profile_image ? (
-                                  <img src={user.profile_image} className="h-full w-full object-cover" />
+                                  <img src={user.profile_image} className="h-full w-full object-cover transition-transform group-hover/avatar:scale-105 duration-700" />
                                 ) : (
-                                  <div className="h-full w-full bg-primary/10 flex items-center justify-center text-4xl font-black text-primary uppercase">
+                                  <div className="h-full w-full bg-gradient-to-br from-primary/20 to-glow-secondary/20 flex items-center justify-center text-5xl font-black text-primary uppercase">
                                     {(user.full_name || user.username || "??").substring(0, 2)}
                                   </div>
                                 )}
                                 {uploading && (
-                                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                       <div className="h-6 w-6 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                       <span className="text-[10px] font-black uppercase text-primary tracking-widest">Syncing</span>
+                                    </div>
                                   </div>
                                 )}
                               </div>
                               <button 
                                 onClick={() => (document.getElementById("profile-upload") as HTMLInputElement)?.click()}
-                                className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-primary text-white shadow-xl flex items-center justify-center hover:scale-110 transition-all z-10"
+                                className="absolute -bottom-2 -right-2 h-12 w-12 rounded-2xl bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-10 border-2 border-background"
+                                title="Update avatar"
                               >
-                                <Palette className="h-4 w-4" />
+                                <Camera className="h-5 w-5" />
                               </button>
                               <input 
                                 id="profile-upload"
@@ -285,39 +316,47 @@ export default function SettingsPage() {
                                 onChange={handleImageUpload}
                               />
                             </div>
-                            <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biometric Avatar Identity</p>
+                            <div className="text-center sm:text-left">
+                               <h4 className="text-base font-bold text-foreground mb-1 uppercase tracking-tight">Biometric Signature</h4>
+                               <p className="text-sm text-muted-foreground max-w-xs leading-relaxed mb-4">Update your profile identity across the Stusil ecosystem.</p>
+                               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 text-[10px] font-black text-primary uppercase tracking-widest">
+                                  Unique Identifier: {user.username}
+                               </div>
+                            </div>
                           </div>
                         )}
 
-                        {section.fields.map((field) => (
-                          <div key={field.label} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center group/field">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover/field:text-primary transition-colors">
-                              {field.label}
-                            </label>
-                            <div className="md:col-span-2">
-                              {field.type === "password" ? (
-                                <div className="relative">
-                                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                          {section.fields.map((field) => (
+                            <div key={field.label} className="group/field">
+                              <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-foreground group-focus-within/field:text-primary transition-colors">
+                                {field.label}
+                              </label>
+                              <div className="relative">
+                                {field.type === "password" ? (
+                                  <>
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within/field:text-primary" />
+                                    <input
+                                      type="password"
+                                      value={formData[field.key] || ""}
+                                      onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                      placeholder={field.placeholder}
+                                      className="w-full rounded-2xl border border-border/50 bg-secondary/20 py-3.5 pl-11 pr-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:bg-background focus:ring-4 placeholder:text-muted-foreground/30 font-mono shadow-sm"
+                                    />
+                                  </>
+                                ) : (
                                   <input
-                                    type="password"
+                                    type={field.type}
                                     value={formData[field.key] || ""}
                                     onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                                     placeholder={field.placeholder}
-                                    className="w-full rounded-2xl border border-border/50 bg-secondary/20 py-3 pl-11 pr-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:ring-4 placeholder:text-muted-foreground/30 font-mono"
+                                    className="w-full rounded-2xl border border-border/50 bg-secondary/20 py-3.5 px-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:bg-background focus:ring-4 placeholder:text-muted-foreground/30 shadow-sm"
                                   />
-                                </div>
-                              ) : (
-                                <input
-                                  type={field.type}
-                                  value={formData[field.key] || ""}
-                                  onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                                  placeholder={field.placeholder}
-                                  className="w-full rounded-2xl border border-border/50 bg-secondary/20 py-3 px-4 text-sm text-foreground outline-none ring-primary/20 transition-all focus:border-primary focus:ring-4 placeholder:text-muted-foreground/30"
-                                />
-                              )}
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                      </div>
                   </GlassCard>
                 </motion.div>

@@ -345,7 +345,7 @@ export default function Startups() {
         </div>
 
         {/* Startup Cards Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-2">
           {loading ? (
             Array(4).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-80 rounded-[2.5rem] w-full" />
@@ -373,7 +373,7 @@ export default function Startups() {
                 >
                   <div className={`absolute top-0 right-0 h-32 w-32 bg-gradient-to-br ${color} opacity-5 blur-[60px] group-hover:opacity-10 transition-opacity`} />
                   
-                  <div className="p-8">
+                  <div className="p-4 sm:p-8">
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-4">
                         <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-lg overflow-hidden relative`}>

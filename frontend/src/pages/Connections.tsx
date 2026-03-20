@@ -249,7 +249,7 @@ export default function Connections() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredConnections.map((user, i) => (
                       <motion.div
                         key={user.id}
@@ -445,7 +445,7 @@ export default function Connections() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {discoverUsers.map((user, i) => {
                       const isPending = pendingReceivedIds.has(user.id) || pendingSentIds.has(user.id);
                       const isConnected = connectedIds.has(user.id);

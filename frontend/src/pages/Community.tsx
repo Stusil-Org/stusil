@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Star, Rocket, Eye, Flame, Trophy, Plus } from "lucide-react";
+import { TrendingUp, Star, Rocket, Eye, Flame, Trophy, Plus, ArrowUpRight } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +8,7 @@ import { getApiData } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Community() {
-  const [trending, setTrending] = useState<{ trendingProjects: any[], hotIdeas: any[] }>({ trendingProjects: [], hotIdeas: [] });
+  const [trending, setTrending] = useState<{ trendingProjects: any[], hotIdeas: any[], topStudents: any[] }>({ trendingProjects: [], hotIdeas: [], topStudents: [] });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -69,7 +69,7 @@ export default function Community() {
                   <h2 className="text-xl font-bold text-foreground">Trending Projects</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6">
                   {trending.trendingProjects.map((p, i) => (
                     <motion.div
                       key={p.id}
@@ -176,6 +176,51 @@ export default function Community() {
                     </div>
                   )}
                 </div>
+              </section>
+
+              {/* Top Students Mini-Leaderboard */}
+              <section className="mt-8">
+                 <div className="flex items-center gap-3 mb-6">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                       <Trophy className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-foreground">Top Innovators</h2>
+                 </div>
+                 
+                 <div className="space-y-3">
+                    {trending.topStudents?.map((u, i) => (
+                       <motion.div
+                          key={u.id}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          onClick={() => navigate(`/u/${u.username}`)}
+                          className="group flex items-center gap-3 p-3 rounded-2xl border border-border/50 bg-secondary/5 hover:border-primary/20 transition-all cursor-pointer"
+                       >
+                          <div className="w-5 text-center text-[10px] font-black text-muted-foreground group-hover:text-primary">#{i + 1}</div>
+                          <div className="h-8 w-8 rounded-lg overflow-hidden border border-border/50 bg-secondary/20 flex-shrink-0">
+                             {u.profile_image ? (
+                                <img src={u.profile_image} className="h-full w-full object-cover" />
+                             ) : (
+                                <div className="h-full w-full flex items-center justify-center text-[9px] font-black text-primary uppercase">
+                                   {u.full_name?.substring(0, 2) || "U"}
+                                </div>
+                             )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                             <p className="text-xs font-bold text-foreground truncate">{u.full_name}</p>
+                             <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">@{u.username} • {u.xp} XP</p>
+                          </div>
+                       </motion.div>
+                    ))}
+                    
+                    <button 
+                       onClick={() => navigate('/leaderboard')}
+                       className="w-full py-2.5 rounded-xl border border-dashed border-border/40 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:border-primary/40 hover:text-primary transition-all text-center mt-2 group"
+                    >
+                       See Full Hall of Fame <ArrowUpRight className="inline-block h-3 w-3 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </button>
+                 </div>
               </section>
 
               <GlassCard className="p-6 border-primary/20 bg-secondary/10">

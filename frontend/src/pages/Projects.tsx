@@ -391,7 +391,7 @@ export default function Projects() {
         </div>
 
         {/* Project Cards Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {loading ? (
             Array(6).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-80 rounded-[2.5rem] w-full" />
@@ -475,7 +475,7 @@ export default function Projects() {
                   </div>
 
                   {/* Body Content */}
-                  <div className="flex flex-1 flex-col p-6">
+                  <div className="flex flex-1 flex-col p-4 sm:p-6">
                     <div className="mb-3 flex items-start justify-between">
                        <h3 className="text-xl font-black text-foreground group-hover:text-primary transition-colors line-clamp-1">{project.title}</h3>
                        {openRoles.length > 0 && (

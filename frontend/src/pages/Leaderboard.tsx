@@ -87,7 +87,7 @@ export default function Leaderboard() {
                              <img src={u.profile_image} className="h-full w-full object-cover" />
                           ) : (
                              <div className="h-full w-full bg-primary/10 flex items-center justify-center text-sm font-black text-primary uppercase">
-                                {u.full_name.substring(0, 2)}
+                                {(u.full_name || u.username || "??").substring(0, 2)}
                              </div>
                           )}
                        </div>
@@ -100,14 +100,14 @@ export default function Leaderboard() {
                        </div>
                        <div className="flex items-center gap-4 text-center">
                           <div className="hidden sm:block">
-                             <p className="text-sm font-black text-foreground">{u._count.projects}</p>
+                             <p className="text-sm font-black text-foreground">{(u._count?.projects || 0) + (u._count?.startups || 0)}</p>
                              <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">Ops</p>
                           </div>
                           <div className="w-px h-8 bg-border/50 hidden sm:block" />
                           <div>
                              <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
                                 <Zap className="h-3 w-3 text-primary fill-current" />
-                                <span className="text-xs font-black text-primary">{(u._count.projects + u._count.startups) * 10} XP</span>
+                                <span className="text-xs font-black text-primary">{((u._count?.projects || 0) + (u._count?.startups || 0)) * 10} XP</span>
                              </div>
                           </div>
                        </div>
@@ -140,8 +140,8 @@ export default function Leaderboard() {
                        <h4 className="text-base font-black text-foreground mb-4 group-hover:text-amber-500 transition-colors line-clamp-1">{p.title}</h4>
                        <div className="flex items-center justify-between pt-4 border-t border-border/30">
                           <div className="flex items-center gap-2">
-                             <div className="h-5 w-5 rounded-lg bg-secondary flex items-center justify-center text-[8px] font-black text-muted-foreground uppercase">{p.owner.full_name[0]}</div>
-                             <span className="text-[9px] font-bold text-muted-foreground uppercase">{p.owner.full_name.split(' ')[0]}</span>
+                             <div className="h-5 w-5 rounded-lg bg-secondary flex items-center justify-center text-[8px] font-black text-muted-foreground uppercase">{p.owner?.full_name?.substring(0, 1) || "U"}</div>
+                             <span className="text-[9px] font-bold text-muted-foreground uppercase">{p.owner?.full_name?.split(' ')[0] || "User"}</span>
                           </div>
                           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-500">
                              <Star className="h-3 w-3 fill-current" /> {p.stars}
