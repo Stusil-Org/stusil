@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ExternalLink, Calendar, Star, Github, Linkedin, Globe, Mail,
-  MapPin, Code, Briefcase, Award,
+  MapPin, Code, Briefcase, Award, MessageCircle, ArrowRight
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
 import { getApiData } from "@/lib/api";
 
 interface UserProfile {
+  id: string;
   name: string;
   title: string;
   university: string;
@@ -39,6 +40,7 @@ export default function PublicPortfolio() {
   const { username } = useParams<{ username: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [error, setError] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function PublicPortfolio() {
           }
 
           setProfile({
+            id: user.id || user._id,
             username: user.username,
             name: user.full_name || user.username,
             title: user.field_of_study ? `${user.field_of_study} Student` : "University Student",
@@ -101,7 +104,14 @@ export default function PublicPortfolio() {
         setError(true);
       }
     };
+    const fetchCurrentUser = async () => {
+      try {
+        const data = await getApiData("/api/v1/auth/me");
+        if (data) setCurrentUserId(data.id || data._id);
+      } catch (err) { console.error("Error fetching current user", err); }
+    };
     fetchPortfolio();
+    fetchCurrentUser();
   }, [username]);
 
   if (error) {
@@ -150,6 +160,17 @@ export default function PublicPortfolio() {
               <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" /> {profile.university}</span>
             </div>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              {currentUserId !== profile.id && (
+                <button 
+                  onClick={() => navigate(`/messages?user=${profile.id}`)}
+                  className="glow-button flex items-center gap-2 text-xs py-2 px-4 shadow-xl shadow-primary/20"
+                >
+                  <MessageCircle className="h-4 w-4" /> Direct Message
+                </button>
+              )}
+            </div>
 
             {/* Social Links */}
             <div className="mt-4 flex flex-wrap gap-2">
