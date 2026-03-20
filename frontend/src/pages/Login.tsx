@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
+import { GlassCard } from "@/components/GlassCard";
 import { toast } from "sonner";
 
 export default function Login() {
@@ -123,40 +124,70 @@ export default function Login() {
         </motion.div>
       </div>
 
-      {/* Right Graphic Section */}
-      <div className="relative hidden w-0 flex-1 lg:block border-l border-white/5 bg-secondary/5 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute bottom-1/4 right-1/4 h-[400px] w-[400px] rounded-full bg-glow-secondary/20 blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+      {/* Right Graphic Section - Enhanced for Trust and Opportunity */}
+      <div className="relative hidden w-0 flex-1 lg:block border-l border-border/10 bg-secondary/5 overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-40">
+           <div className="absolute top-[-10%] right-[-10%] h-[600px] w-[600px] rounded-full bg-primary/20 blur-[120px]" />
+           <div className="absolute bottom-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-glow-secondary/20 blur-[100px]" />
         </div>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="relative w-full max-w-lg">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="glass-card p-6 border border-white/10 shadow-2xl backdrop-blur-3xl relative z-20"
-            >
-              <div className="flex items-center gap-4 mb-4 border-b border-white/5 pb-4">
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">AJ</div>
-                <div>
-                  <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
-                  <div className="h-3 w-32 bg-white/5 rounded mt-2 animate-pulse" />
-                </div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-12">
+           <div className="w-full max-w-lg space-y-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="space-y-6"
+              >
+                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary">
+                    <Sparkles className="h-3 w-3" /> Live Ecosystem Activity
+                 </div>
+                 <h2 className="text-4xl xl:text-5xl font-black text-foreground leading-[1.1] tracking-tighter">
+                    Where students turn <span className="text-primary italic">ideas</span> into <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-glow-secondary">impact.</span>
+                 </h2>
+              </motion.div>
+
+              <div className="grid gap-4">
+                 {[
+                    { label: "New Project Launched", user: "Sarah L.", domain: "FinTech", color: "primary" },
+                    { label: "Secured Beta Testing", user: "David K.", domain: "AI/ML", color: "glow-secondary" },
+                    { label: "Community Milestone", user: "1.2k members", domain: "Growth", color: "primary" }
+                 ].map((item, i) => (
+                    <motion.div
+                       key={i}
+                       initial={{ opacity: 0, x: 50 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       transition={{ delay: 0.4 + (i * 0.1), duration: 0.6 }}
+                    >
+                       <GlassCard className="p-4 border-white/5 bg-white/5 backdrop-blur-3xl group hover:border-primary/30 transition-all duration-500">
+                          <div className="flex items-center justify-between">
+                             <div className="flex items-center gap-4">
+                                <div className={`h-10 w-10 rounded-xl bg-${item.color}/10 flex items-center justify-center text-${item.color === 'primary' ? 'primary' : 'glow-secondary'}`}>
+                                   {item.user[0]}
+                                </div>
+                                <div>
+                                   <div className="text-sm font-bold text-foreground">{item.label}</div>
+                                   <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">{item.user} • {item.domain}</div>
+                                </div>
+                             </div>
+                             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors group-hover:translate-x-1 duration-300" />
+                          </div>
+                       </GlassCard>
+                    </motion.div>
+                 ))}
               </div>
-              <div className="space-y-3">
-                <div className="h-3 w-full bg-white/5 rounded animate-pulse" />
-                <div className="h-3 w-4/5 bg-white/5 rounded animate-pulse" />
-                <div className="h-3 w-5/6 bg-white/5 rounded animate-pulse" />
-              </div>
-            </motion.div>
-          </div>
+           </div>
         </div>
 
-        <div className="absolute bottom-12 left-12 right-12 z-20">
-          <h2 className="text-3xl font-bold text-white mb-2">Build something incredible.</h2>
-          <p className="text-white/60 text-lg">Join the premier network for student founders and builders.</p>
+        <div className="absolute bottom-12 left-12 right-12 z-20 flex items-center justify-between">
+           <div className="flex items-center gap-4">
+              <div className="flex -space-x-3">
+                 {[1,2,3,4].map(i => (
+                    <div key={i} className="h-8 w-8 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[10px] font-bold">U{i}</div>
+                 ))}
+              </div>
+              <p className="text-xs font-bold text-muted-foreground">Joined by 2,000+ builders this month</p>
+           </div>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   Mail, Lock, User, ArrowRight, ArrowLeft, Sparkles, Check,
   Code, Briefcase, FlaskConical, Palette, BookOpen, Rocket, Users, Target,
 } from "lucide-react";
+import { GlassCard } from "@/components/GlassCard";
 import { toast } from "sonner";
 
 export default function Join() {
@@ -126,52 +127,83 @@ export default function Join() {
         </motion.div>
       </div>
 
-      {/* Right Graphic Section */}
-      <div className="relative hidden w-0 flex-1 lg:block border-l border-white/5 bg-secondary/5 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/4 right-1/4 h-[600px] w-[600px] rounded-full bg-primary/20 blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '6s' }} />
-          <div className="absolute bottom-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-emerald-500/10 blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+      {/* Right Graphic Section - Enhanced for Opportunity and Growth */}
+      <div className="relative hidden w-0 flex-1 lg:block border-l border-border/10 bg-secondary/5 overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-40">
+           <div className="absolute top-[-10%] right-[-10%] h-[600px] w-[600px] rounded-full bg-primary/20 blur-[120px]" />
+           <div className="absolute bottom-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-[100px]" />
         </div>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="relative w-full max-w-lg h-96">
-            <motion.div
-              initial={{ x: -20, y: -20, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="absolute top-0 left-0 glass-card p-5 border border-primary/20 shadow-2xl backdrop-blur-3xl z-10 w-64"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-foreground">Find Co-founders</div>
-                  <div className="text-xs text-muted-foreground">Match instantly</div>
-                </div>
-              </div>
-            </motion.div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-12">
+           <div className="w-full max-w-lg space-y-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="space-y-6 text-center lg:text-left"
+              >
+                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                    <Rocket className="h-3 w-3" /> Start Your Journey
+                 </div>
+                 <h2 className="text-4xl xl:text-6xl font-black text-foreground leading-[1.1] tracking-tighter">
+                    Expand your <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">horizons.</span>
+                 </h2>
+                 <p className="text-muted-foreground text-lg max-w-md">Find the perfect team, collaborate on projects, and launch the next big thing.</p>
+              </motion.div>
 
-            <motion.div
-              initial={{ x: 20, y: 20, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-              className="absolute bottom-0 right-0 glass-card p-5 border border-emerald-500/20 shadow-2xl backdrop-blur-3xl z-10 w-72"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <Rocket className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-foreground">Launch Startups</div>
-                  <div className="text-xs text-muted-foreground mt-1 text-emerald-400">Join 500+ student teams</div>
-                </div>
+              <div className="relative">
+                 <motion.div
+                   initial={{ x: -20, opacity: 0 }}
+                   animate={{ x: 0, opacity: 1 }}
+                   transition={{ delay: 0.4 }}
+                   className="absolute -top-12 -left-8 glass-card p-4 border-primary/20 shadow-2xl z-20 w-48"
+                 >
+                    <div className="flex items-center gap-3">
+                       <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <Users className="h-4 w-4" />
+                       </div>
+                       <div className="text-[10px] font-bold">20+ Teams Hiring</div>
+                    </div>
+                 </motion.div>
+
+                 <div className="space-y-4 pt-8">
+                    {[
+                       { title: "Project Collaboration", desc: "Work together on course assignments", icon: Code, color: "primary" },
+                       { title: "Startup Incubation", desc: "Get resources for your big idea", icon: Target, color: "emerald" }
+                    ].map((feature, i) => (
+                       <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.6 + (i * 0.1) }}
+                       >
+                          <GlassCard className="p-5 border-white/5 bg-white/5 backdrop-blur-3xl">
+                             <div className="flex items-center gap-4">
+                                <div className={`h-12 w-12 rounded-2xl bg-${feature.color === 'primary' ? 'primary' : 'emerald-500'}/10 flex items-center justify-center text-${feature.color === 'primary' ? 'primary' : 'emerald-500'}`}>
+                                   <feature.icon className="h-6 w-6" />
+                                </div>
+                                <div className="space-y-1">
+                                   <div className="text-sm font-bold text-foreground">{feature.title}</div>
+                                   <div className="text-xs text-muted-foreground">{feature.desc}</div>
+                                </div>
+                             </div>
+                          </GlassCard>
+                       </motion.div>
+                    ))}
+                 </div>
               </div>
-            </motion.div>
-          </div>
+           </div>
         </div>
 
-        <div className="absolute bottom-12 left-12 right-12 z-20">
-          <h2 className="text-4xl font-bold text-white mb-3 tracking-tight">Expand your <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">horizons.</span></h2>
-          <p className="text-white/60 text-lg max-w-lg">Find the perfect team, collaborate on assignments, and launch the next big thing right from campus.</p>
+        <div className="absolute bottom-12 left-12 right-12 z-20 flex items-center justify-between">
+           <div className="flex items-center gap-4">
+              <div className="flex -space-x-2">
+                 {[1,2,3].map(i => (
+                    <div key={i} className="h-8 w-8 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[10px] font-bold">U{i}</div>
+                 ))}
+              </div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Trusted by 5,000+ students</p>
+           </div>
         </div>
       </div>
     </div>
