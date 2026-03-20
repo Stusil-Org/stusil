@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../services/db');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/email');
 
 exports.signup = async (req, res) => {
   try {
@@ -27,6 +29,7 @@ exports.signup = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
+    const verify_token = crypto.randomBytes(32).toString('hex');
 
     const newUser = await prisma.user.create({
       data: {
@@ -38,9 +41,16 @@ exports.signup = async (req, res) => {
         field_of_study,
         skill_level,
         bio,
-        profile_image
+        profile_image,
+        verify_token
       }
     });
+
+    try {
+      await sendVerificationEmail(email, verify_token);
+    } catch (err) {
+      console.warn('Failed to send verification email during signup:', err);
+    }
 
     // Automatically create empty portfolio
     await prisma.portfolio.create({
@@ -119,5 +129,75 @@ exports.getMe = async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Server error fetching profile' });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: "Missing token" });
+
+    const user = await prisma.user.findFirst({ where: { verify_token: token } });
+    if (!user) return res.status(400).json({ error: "Invalid or expired token" });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { is_verified: true, verify_token: null }
+    });
+
+    res.json({ message: "Email verified successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Verification failed" });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user) {
+      // Don't reveal user existence for security, but return success
+      return res.json({ message: "If that email exists, a reset link has been sent." });
+    }
+
+    const reset_token = crypto.randomBytes(32).toString('hex');
+    const reset_expires = new Date(Date.now() + 3600000); // 1 hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { reset_token, reset_expires }
+    });
+
+    await sendPasswordResetEmail(email, reset_token);
+    res.json({ message: "If that email exists, a reset link has been sent." });
+  } catch (error) {
+    res.status(500).json({ error: "Password reset request failed" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    const user = await prisma.user.findFirst({
+      where: {
+        reset_token: token,
+        reset_expires: { gt: new Date() }
+      }
+    });
+
+    if (!user) return res.status(400).json({ error: "Invalid or expired reset token" });
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password_hash, reset_token: null, reset_expires: null }
+    });
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Password reset failed" });
   }
 };

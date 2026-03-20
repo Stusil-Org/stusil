@@ -21,6 +21,10 @@ model User {
   links          String?          // JSON string for social links (github, linkedin, website)
   country        String?          // User's country
   role           String           @default("user")
+  is_verified    Boolean          @default(false)
+  verify_token   String?
+  reset_token    String?
+  reset_expires  DateTime?
   created_at     DateTime         @default(now())
   updated_at     DateTime         @updatedAt
 

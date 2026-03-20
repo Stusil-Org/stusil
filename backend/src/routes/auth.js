@@ -1,11 +1,14 @@
 const express = require('express');
-const { signup, login, getMe } = require('../controllers/auth');
+const { signup, login, getMe, verifyEmail, forgotPassword, resetPassword } = require('../controllers/auth');
 const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 
 router.post('/signup', signup);
 router.post('/login', login);
-// Assuming logout is handled on client side by clearing token
+router.post('/verify-email', verifyEmail);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });

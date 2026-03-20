@@ -84,7 +84,7 @@ const Index = () => {
         setConnectionCount(cData.connectedUsers?.length || 0);
 
         const nData = await getApiData("/api/v1/notifications");
-        setNotifications(nData); 
+        setNotifications(Array.isArray(nData) ? nData.slice(0, 5) : []); 
         setUnreadCount(nData.filter((n: NotificationType) => !n.is_read).length);
         
         if (Array.isArray(nData)) {
@@ -146,7 +146,7 @@ const Index = () => {
     socketRef.current = socket;
     socket.on("connect", () => { socket.emit("join_personal", user.id); });
     socket.on("new_notification", (notif: NotificationType) => {
-      setNotifications((prev) => [notif, ...prev]);
+      setNotifications((prev) => [notif, ...prev].slice(0, 5));
       setUnreadCount((prev) => prev + 1);
       setActivity((prev) => [{
         id: notif.id,
