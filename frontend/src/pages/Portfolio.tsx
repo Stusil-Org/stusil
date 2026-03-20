@@ -26,12 +26,12 @@ interface UserProfile {
   username: string;
   profileImage: string | null;
   rank: number;
+  achievements: any[];
 }
 
-const achievements = [
-  { title: "Platform Tester", date: "2026", icon: Award },
-  { title: "Early Adopter", date: "2026", icon: Code },
-];
+const iconMap: Record<string, any> = {
+  Award, Code, Rocket, Briefcase, Users, Star, Lightbulb, Zap
+};
 
 const colors = [
   "from-primary to-glow-secondary",
@@ -83,6 +83,10 @@ export default function Portfolio() {
         profileImage: user.profile_image || null,
         skills: parsedSkills,
         rank: meData.rank || 142,
+        achievements: (meData.achievements || []).map((a: any) => ({
+          ...a,
+          icon: iconMap[a.icon] || Award
+        })),
         projects: projects.map((p: any, i: number) => ({
           id: p.id,
           title: p.title,
@@ -385,22 +389,22 @@ export default function Portfolio() {
                )}
             </GlassCard>
             
-            <GlassCard className="rounded-[2.5rem] p-8 border-border/50 overflow-hidden relative group">
-               <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">Milestones</h2>
-               <div className="space-y-4">
-                {achievements.map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 group/item">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary text-primary border border-border/50 group-hover/item:border-primary/50 transition-all">
-                      <item.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-foreground">{item.title}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground">{item.date}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
+             <GlassCard className="rounded-[2.5rem] p-8 border-border/50 overflow-hidden relative group">
+                <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">Ecosystem Milestones</h2>
+                <div className="space-y-4">
+                 {profile.achievements.map((item, i) => (
+                   <div key={i} className="flex items-center gap-4 group/item">
+                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary border border-border/50 group-hover/item:border-primary/50 transition-all ${item.color || 'text-primary'}`}>
+                       <item.icon className="h-5 w-5" />
+                     </div>
+                     <div>
+                       <p className="text-xs font-black uppercase tracking-widest text-foreground">{item.title}</p>
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase">{item.date}</p>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </GlassCard>
           </div>
 
           <div className="lg:col-span-2 space-y-12">

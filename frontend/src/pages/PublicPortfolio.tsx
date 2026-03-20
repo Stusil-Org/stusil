@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ExternalLink, Calendar, Star, Github, Linkedin, Globe, Mail,
-  MapPin, Code, Briefcase, Award, MessageCircle, ArrowRight
+  MapPin, Code, Briefcase, Award, MessageCircle, ArrowRight, Rocket, Users, Lightbulb, Zap, ArrowUpRight
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { GlassCard } from "@/components/GlassCard";
@@ -22,18 +22,18 @@ interface UserProfile {
   projects: any[];
   username: string;
   profileImage: string | null;
+  achievements: any[];
 }
+
+const iconMap: Record<string, any> = {
+  Award, Code, Rocket, Briefcase, Users, Star, Lightbulb, Zap
+};
 
 const colors = [
   "from-primary to-glow-secondary",
   "from-emerald-500 to-teal-500",
   "from-amber-500 to-orange-500",
   "from-pink-500 to-rose-500",
-];
-
-const achievements = [
-  { title: "Platform Tester", date: "2026", icon: Award },
-  { title: "Early Adopter", date: "2026", icon: Code },
 ];
 
 export default function PublicPortfolio() {
@@ -80,9 +80,13 @@ export default function PublicPortfolio() {
             title: user.field_of_study ? `${user.field_of_study} Student` : "University Student",
             university: user.university || "Campus",
             location: user.country || "Not specified",
-            bio: portfolio?.bio || user.bio || "Passionate about building cool tools and learning new software skills.",
+            bio: portfolio?.bio || user.bio || "Passionate about building cool tools.",
             profileImage: user.profile_image || null,
             skills: parsedSkills,
+            achievements: (user.achievements || []).map((a: any) => ({
+              ...a,
+              icon: iconMap[a.icon] || Award
+            })),
             projects: projects.map((p: any, i: number) => ({
               id: p.id,
               title: p.title,
@@ -209,14 +213,16 @@ export default function PublicPortfolio() {
 
         {/* Achievements */}
         <GlassCard className="mb-6">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Achievements</h2>
-          <div className="flex flex-wrap gap-3">
-            {achievements.map((a) => (
-              <div key={a.title} className="flex items-center gap-2 rounded-xl border border-border/30 bg-secondary/20 px-3 py-2">
-                <a.icon className="h-4 w-4 text-primary" />
+          <h2 className="mb-4 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Ecosystem Milestones</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {profile.achievements.map((a, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-2xl border border-border/30 bg-secondary/20 p-4 group/item hover:border-primary/50 transition-all">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-secondary border border-border/50 group-hover/item:border-primary/50 transition-all ${a.color || 'text-primary'}`}>
+                  <a.icon className="h-5 w-5" />
+                </div>
                 <div>
-                  <p className="text-xs font-medium text-foreground">{a.title}</p>
-                  <p className="text-[10px] text-muted-foreground">{a.date}</p>
+                  <p className="text-sm font-black text-foreground uppercase tracking-widest">{a.title}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">{a.date}</p>
                 </div>
               </div>
             ))}

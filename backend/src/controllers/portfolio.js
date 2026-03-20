@@ -39,6 +39,26 @@ exports.getPortfolio = async (req, res) => {
       .map(m => ({ ...m.project, role: m.role, isOwner: false }))
       .filter(p => p.visibility === 'public' && p.owner_id !== user.id);
 
+    // Calculate Dynamic Achievements (Public)
+    const achievements = [];
+    if (user.startup_ideas.length >= 1) {
+      achievements.push({ title: "Visionary Founder", date: "Verified", icon: "Rocket", color: "text-amber-500" });
+    }
+    if (user.projects.length >= 3) {
+      achievements.push({ title: "Product Builder", date: "Verified", icon: "Briefcase", color: "text-primary" });
+    }
+    const connectionsCount = await prisma.connection.count({
+      where: {
+        OR: [
+          { sender_id: user.id, status: 'accepted' },
+          { receiver_id: user.id, status: 'accepted' }
+        ]
+      }
+    });
+    if (connectionsCount >= 10) {
+      achievements.push({ title: "Community Pillar", date: "Verified", icon: "Users", color: "text-emerald-500" });
+    }
+
     res.json({
       user: {
         id: user.id,
@@ -51,6 +71,11 @@ exports.getPortfolio = async (req, res) => {
         bio: user.bio,
         links: user.links,
         country: user.country,
+        achievements: [
+          { title: "Platform Tester", date: "2026", icon: "Award" },
+          { title: "Early Adopter", date: "2026", icon: "Code" },
+          ...achievements
+        ]
       },
       portfolio: user.portfolio || {},
       projects: [...ownedProjects, ...joinedProjects],

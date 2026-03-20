@@ -118,9 +118,6 @@ exports.getMe = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Live Social Rank Estimation
-    // In a real-world scenario, you'd use a separate score field in DB or a heavy aggregation
-    // For now, let's estimate based on number of projects (simplified for performance)
     const higherRankedCount = await prisma.user.count({
       where: {
         projects: {
@@ -129,9 +126,34 @@ exports.getMe = async (req, res) => {
       }
     }).catch(e => 141);
 
+    // Calculate Dynamic Achievements
+    const achievements = [];
+    if (user._count.startup_ideas >= 1) {
+      achievements.push({ title: "Visionary Founder", date: "Verified", icon: "Rocket", color: "text-amber-500" });
+    }
+    if (user._count.projects >= 3) {
+      achievements.push({ title: "Product Builder", date: "Verified", icon: "Briefcase", color: "text-primary" });
+    }
+    const connectionsCount = await prisma.connection.count({
+      where: {
+        OR: [
+          { sender_id: user.id, status: 'accepted' },
+          { receiver_id: user.id, status: 'accepted' }
+        ]
+      }
+    });
+    if (connectionsCount >= 10) {
+      achievements.push({ title: "Community Pillar", date: "Verified", icon: "Users", color: "text-emerald-500" });
+    }
+
     const data = {
       ...user,
-      rank: Math.max(1, Math.floor(higherRankedCount * 0.8) + 1) // Just an estimation to look live
+      rank: Math.max(1, Math.floor(higherRankedCount * 0.8) + 1), // Just an estimation to look live
+      achievements: [
+        { title: "Platform Tester", date: "2026", icon: "Award" },
+        { title: "Early Adopter", date: "2026", icon: "Code" },
+        ...achievements
+      ]
     };
 
     res.json(data);
