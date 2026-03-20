@@ -19,12 +19,15 @@ const communityRoutes = require('./routes/community');
 const initSockets = require('./sockets');
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // Sockets setup
+const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '') || 'https://stusil.vercel.app';
+
 const io = new Server(server, {
   cors: {
-    origin: 'https://stusil.vercel.app',
+    origin: frontendUrl,
   }
 });
 
@@ -32,7 +35,7 @@ const io = new Server(server, {
 app.set('io', io);
 
 app.use(cors({
-  origin: ['https://stusil.vercel.app', 'http://localhost:8080', 'http://localhost:5000'],
+  origin: [frontendUrl, 'http://localhost:8080', 'http://localhost:5000'],
   credentials: true,
 }));
 app.use(express.json({ limit: '5mb' }));

@@ -63,8 +63,8 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({ token, user: { id: newUser.id, username: newUser.username, email: newUser.email, full_name: newUser.full_name } });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error during signup' });
+    console.error('SIGNUP ERROR:', error);
+    res.status(500).json({ error: error.message || 'Server error during signup' });
   }
 };
 
@@ -147,7 +147,8 @@ exports.verifyEmail = async (req, res) => {
 
     res.json({ message: "Email verified successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Verification failed" });
+    console.error('VERIFY EMAIL ERROR:', error);
+    res.status(500).json({ error: error.message || "Verification failed" });
   }
 };
 
@@ -172,7 +173,8 @@ exports.forgotPassword = async (req, res) => {
     await sendPasswordResetEmail(email, reset_token);
     res.json({ message: "If that email exists, a reset link has been sent." });
   } catch (error) {
-    res.status(500).json({ error: "Password reset request failed" });
+    console.error('FORGOT PASSWORD ERROR:', error);
+    res.status(500).json({ error: error.message || "Password reset request failed" });
   }
 };
 
@@ -198,6 +200,7 @@ exports.resetPassword = async (req, res) => {
 
     res.json({ message: "Password updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Password reset failed" });
+    console.error('RESET PASSWORD ERROR:', error);
+    res.status(500).json({ error: error.message || "Password reset failed" });
   }
 };
