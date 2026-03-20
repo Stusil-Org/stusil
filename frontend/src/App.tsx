@@ -21,6 +21,9 @@ import Connections from "./pages/Connections";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import GetStarted from "./pages/GetStarted";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -38,6 +41,9 @@ const App = () => (
           <Route path="/signup" element={<Join />} />
           <Route path="/get-started" element={<GetStarted />} />
           <Route path="/about" element={<About />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/u/:username" element={<PublicPortfolio />} />
 
           {/* Protected Routes */}

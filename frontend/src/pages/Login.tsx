@@ -97,7 +97,7 @@ export default function Login() {
                   <input type="checkbox" className="rounded border-border bg-transparent" />
                   Remember me
                 </label>
-                <a href="#" className="text-primary hover:text-primary/80 transition-colors">Forgot password?</a>
+                <Link to="/forgot-password" stroke-width="1.5" className="text-primary hover:text-primary/80 transition-colors">Forgot password?</Link>
               </div>
 
               <button type="submit" disabled={loading} className="glow-button flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold disabled:opacity-50">
