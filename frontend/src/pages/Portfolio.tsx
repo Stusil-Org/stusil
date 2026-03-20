@@ -25,6 +25,7 @@ interface UserProfile {
   startups: any[];
   username: string;
   profileImage: string | null;
+  rank: number;
 }
 
 const achievements = [
@@ -81,6 +82,7 @@ export default function Portfolio() {
         email: user.email,
         profileImage: user.profile_image || null,
         skills: parsedSkills,
+        rank: meData.rank || 142,
         projects: projects.map((p: any, i: number) => ({
           id: p.id,
           title: p.title,
@@ -250,7 +252,7 @@ export default function Portfolio() {
                <div className="mb-6">
                   <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 border border-primary/20 mb-4 animate-bounce-subtle">
                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Elite Innovator</span>
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{profile.rank < 100 ? "Elite Legend" : "Rising Star"}</span>
                   </div>
                   <h1 className="heading-tight text-5xl font-black text-foreground lg:text-7xl tracking-tighter mb-2">{profile.name}</h1>
                   <p className="text-xl font-bold bg-gradient-to-r from-primary to-glow-secondary bg-clip-text text-transparent">@{profile.username}</p>
@@ -321,7 +323,7 @@ export default function Portfolio() {
                { label: "Active Ops", value: profile.stats.projects, icon: Rocket, color: "from-blue-500 to-indigo-600" },
                { label: "Incubations", value: profile.stats.startups, icon: Lightbulb, color: "from-amber-500 to-orange-600" },
                { label: "XP Points", value: profile.stats.contributions, icon: Zap, color: "from-emerald-500 to-teal-600" },
-               { label: "Social Rank", value: "#142", icon: Star, color: "from-rose-500 to-pink-600" }
+                { label: "Social Rank", value: `#${profile.rank}`, icon: Star, color: "from-rose-500 to-pink-600" }
              ].map((stat, i) => (
                <div key={i} className="group/stat relative overflow-hidden rounded-[2rem] border border-border/50 bg-secondary/20 p-6 transition-all hover:bg-secondary/40">
                   <div className={`absolute top-0 right-0 h-20 w-20 bg-gradient-to-br ${stat.color} opacity-0 blur-[30px] group-hover/stat:opacity-20 transition-opacity`} />

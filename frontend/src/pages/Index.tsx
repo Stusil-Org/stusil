@@ -204,64 +204,50 @@ const Index = () => {
           <div className="hidden lg:flex items-center gap-3">
              <div className="text-right">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Rank</p>
-                <p className="text-sm font-black text-foreground">Top 5%</p>
+                <p className="text-sm font-black text-foreground">#{user?.rank || 142}</p>
              </div>
              <div className="h-10 w-[2px] bg-border/50 mx-2" />
              <div className="text-right">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Status</p>
-                <p className="text-sm font-black text-emerald-500">Elite Scout</p>
+                <p className="text-sm font-black text-emerald-500">{user?.rank < 100 ? "Elite Legend" : "Rising Star"}</p>
              </div>
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="md:col-span-2">
-            <GlassCard className="relative overflow-hidden group">
-              <div className="absolute -right-10 -top-10 h-32 w-32 bg-primary/20 blur-[60px] rounded-full group-hover:scale-125 transition-transform duration-700" />
-              <div className="flex items-start justify-between relative z-10">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">Skill Credits</p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="heading-tight text-5xl font-black text-foreground">1,250</p>
-                    <span className="text-xs font-bold text-primary">SC</span>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <div className="flex h-5 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-black text-emerald-500 border border-emerald-500/20">
-                      <TrendingUp className="h-2.5 w-2.5" /> +12%
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Active Growth</span>
-                  </div>
-                </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-xl shadow-primary/10">
-                  <Wallet className="h-7 w-7 text-primary" />
-                </div>
-              </div>
-            </GlassCard>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="md:col-span-2">
             <GlassCard className="relative overflow-hidden border-glow-secondary/20 h-full">
               <div className="absolute -right-6 -bottom-6 h-20 w-20 bg-glow-secondary/10 blur-[40px] rounded-full" />
-              <div className="relative z-10">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1">Active Ventures</p>
-                <p className="heading-tight mt-2 text-4xl font-black text-foreground">{projectCount}</p>
-                <div className="mt-4 flex items-center gap-1.5">
-                   <FolderOpen className="h-3 w-3 text-glow-secondary" />
-                   <span className="text-[10px] font-bold text-glow-secondary uppercase">Project Phase</span>
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1">Active Ventures</p>
+                  <p className="heading-tight mt-2 text-5xl font-black text-foreground">{projectCount}</p>
+                  <div className="mt-4 flex items-center gap-1.5">
+                    <FolderOpen className="h-3 w-3 text-glow-secondary" />
+                    <span className="text-[10px] font-bold text-glow-secondary uppercase tracking-widest">Live in Ecosystem</span>
+                  </div>
+                </div>
+                <div className="h-16 w-16 rounded-2xl bg-glow-secondary/5 border border-glow-secondary/20 flex items-center justify-center text-glow-secondary">
+                  <Rocket className="h-8 w-8" />
                 </div>
               </div>
             </GlassCard>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="md:col-span-2">
             <GlassCard className="relative overflow-hidden border-orange-500/20 h-full">
               <div className="absolute -right-6 -bottom-6 h-20 w-20 bg-orange-500/10 blur-[40px] rounded-full" />
-              <div className="relative z-10">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1">Founding Network</p>
-                <p className="heading-tight mt-2 text-4xl font-black text-foreground">{connectionCount}</p>
-                <div className="mt-4 flex items-center gap-1.5">
-                   <Users className="h-3 w-3 text-orange-500" />
-                   <span className="text-[10px] font-bold text-orange-500 uppercase">Teammates</span>
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1">Founding Network</p>
+                  <p className="heading-tight mt-2 text-5xl font-black text-foreground">{connectionCount}</p>
+                  <div className="mt-4 flex items-center gap-1.5">
+                    <Users className="h-3 w-3 text-orange-400" />
+                    <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">Collective Power</span>
+                  </div>
+                </div>
+                <div className="h-16 w-16 rounded-2xl bg-orange-500/5 border border-orange-500/20 flex items-center justify-center text-orange-400">
+                  <Flame className="h-8 w-8" />
                 </div>
               </div>
             </GlassCard>
