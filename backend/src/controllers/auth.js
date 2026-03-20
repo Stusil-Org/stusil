@@ -64,7 +64,7 @@ exports.signup = async (req, res) => {
     res.status(201).json({ token, user: { id: newUser.id, username: newUser.username, email: newUser.email, full_name: newUser.full_name } });
   } catch (error) {
     console.error('SIGNUP ERROR:', error);
-    res.status(500).json({ error: error.message || 'Server error during signup' });
+    res.status(500).json({ error: 'Soon' });
   }
 };
 
@@ -173,7 +173,7 @@ exports.forgotPassword = async (req, res) => {
     res.json({ message: "If that email exists, a reset link has been sent." });
   } catch (error) {
     console.error('FORGOT PASSWORD ERROR:', error);
-    res.status(500).json({ error: error.message || "Password reset request failed" });
+    res.status(500).json({ error: 'Soon' });
   }
 };
 
@@ -200,6 +200,6 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: "Password updated successfully" });
   } catch (error) {
     console.error('RESET PASSWORD ERROR:', error);
-    res.status(500).json({ error: error.message || "Password reset failed" });
+    res.status(500).json({ error: 'Soon' });
   }
 };
