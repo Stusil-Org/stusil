@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ExternalLink, Calendar, Star, Github, Linkedin, Globe, Mail,
   MapPin, Code, Briefcase, Award, BookOpen, Camera, Pencil, Trash2, X, Save, Rocket, Plus,
-  ArrowUpRight, Zap, Lightbulb,
+  ArrowUpRight, Zap, Lightbulb, Users
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
