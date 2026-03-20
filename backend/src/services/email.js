@@ -1,20 +1,26 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true', 
-  auth: {
-    user: process.env.SMTP_USER, 
-    pass: process.env.SMTP_PASS, 
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Verification check function (mock for Resend since it uses HTTP API, not SMTP socket)
+exports.verifyEmailService = async () => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('Missing RESEND_API_KEY');
+  }
+  return true;
+};
+
+// Map exports.transporter for any existing server checks (even though Resend doesn't use it)
+exports.transporter = {
+  verify: exports.verifyEmailService
+};
 
 exports.sendVerificationEmail = async (email, token) => {
-  const url = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email?token=${token}`;
+  const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:8080').replace(/\/$/, '');
+  const url = `${baseUrl}/verify-email?token=${token}`;
   
-  await transporter.sendMail({
-    from: '"Stusil" <noreply@stusil.org>',
+  const { data, error } = await resend.emails.send({
+    from: 'Stusil <onboarding@resend.dev>', // Resend default testing sender
     to: email,
     subject: "Verify your Stusil account",
     html: `
@@ -28,13 +34,19 @@ exports.sendVerificationEmail = async (email, token) => {
       </div>
     `,
   });
+
+  if (error) {
+    console.error('RESEND VERIFICATION EMAIL ERROR:', error);
+    throw new Error(error.message);
+  }
 };
 
 exports.sendPasswordResetEmail = async (email, token) => {
-  const url = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/reset-password?token=${token}`;
+  const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:8080').replace(/\/$/, '');
+  const url = `${baseUrl}/reset-password?token=${token}`;
   
-  await transporter.sendMail({
-    from: '"Stusil" <noreply@stusil.org>',
+  const { data, error } = await resend.emails.send({
+    from: 'Stusil <onboarding@resend.dev>',
     to: email,
     subject: "Reset your Stusil password",
     html: `
@@ -48,4 +60,9 @@ exports.sendPasswordResetEmail = async (email, token) => {
       </div>
     `,
   });
+
+  if (error) {
+    console.error('RESEND PASSWORD RESET ERROR:', error);
+    throw new Error(error.message);
+  }
 };

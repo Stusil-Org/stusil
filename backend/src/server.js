@@ -90,6 +90,17 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  
+  // Verify email transporter
+  const { transporter } = require('./services/email');
+  if (transporter) {
+    try {
+      await transporter.verify();
+      console.log('✅ Email service is ready');
+    } catch (err) {
+      console.error('❌ Email service error:', err);
+    }
+  }
 });

@@ -158,8 +158,7 @@ exports.forgotPassword = async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email } });
     
     if (!user) {
-      // Don't reveal user existence for security, but return success
-      return res.json({ message: "If that email exists, a reset link has been sent." });
+      return res.status(404).json({ error: "No account found with this email address. Please check your spelling or sign up." });
     }
 
     const reset_token = crypto.randomBytes(32).toString('hex');
