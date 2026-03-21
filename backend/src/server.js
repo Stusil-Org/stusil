@@ -24,10 +24,30 @@ const server = http.createServer(app);
 
 // Sockets setup
 const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '') || 'https://stusil.vercel.app';
+const allowedOrigins = [
+  frontendUrl,
+  'https://www.stusil.online',
+  'https://stusil.online',
+  'http://www.stusil.online',
+  'http://stusil.online',
+  'https://stusil.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'http://localhost:5000'
+];
 
 const io = new Server(server, {
   cors: {
-    origin: frontendUrl,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
@@ -35,8 +55,19 @@ const io = new Server(server, {
 app.set('io', io);
 
 app.use(cors({
-  origin: [frontendUrl, 'http://localhost:8080', 'http://localhost:5000'],
+  origin: (origin, callback) => {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked for origin:', origin);
+      callback(null, false); // Don't throw error, just don't allow
+    }
+  },
   credentials: true,
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
@@ -59,7 +90,13 @@ const authLimiter = rateLimit({
 });
 
 // App-wide limiter
-app.use('/api/', limiter);
+app.use('/api/', (req, res, next) => {
+  // Check if it's an OPTIONS request (preflight)
+  if (req.method === 'OPTIONS') {
+    return next(); // Skip rate limiting for preflight
+  }
+  limiter(req, res, next);
+});
 
 // Sockets
 initSockets(io);
